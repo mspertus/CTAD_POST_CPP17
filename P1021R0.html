@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <style>
+
+.comment { color: #999999; font-style: italic; }
+.pre { color: #000099; }
+.string { color: #009900; }
+.char { color: #009900; }
+.float { color: #996600; }
+.int { color: #999900; }
+.bool { color: #000000; font-weight: bold; }
+.type { color: #FF6633; }
+.flow { color: #FF0000; }
+.keyword { color: #990000; }
+.operator { color: #663300; font-weight: bold; }
+.operator { color: #663300; font-weight: bold; }
+pre.code {
+    border: 2px solid #666;
+    background-color: #F4F4F4;
+    padding-left: 10px;
+    padding-top: 0px;
+}
+code {
+    border: 2px solid #d0d0d0;
+    background-color: LightYellow;
+    padding: 2px;
+    padding-left: 10px;
+    display:table;
+    white-space:pre;
+    margin:2px;
+    margin-bottom:10px;
+}
+dt {
+    font-weight: bold;
+}
+.ins {
+    background-color:#A0FFA0;
+}
+.del {
+    background-color:#FFA0A0;
+    text-decoration:line-through
+}    
+</style>
+
+<title>Improvements to Constructor Template Argument Deduction</title>
+</head>
+
+<body>
+<p>P1021R0<br>
+Mike Spertus, Symantec<br>
+<a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
+2018-05-07<br>
+Audience: Evolution Working Group
+</p>
+<h1>Extensions to Class Template Argument Deduction</h1>
+This paper proposes several recommended extensions to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>
+<h2>Deduction guides for function templates</h2>
+<p>We propose allowing deduction guides for function templates. In addition to the (not to be underestimated) value
+of increased consistency, we provide the following motivating use cases.</p>
+<h4>Example: Unwrapping reference wrappers</h4>
+<p><tt>std::reference_wrapper</tt> is commonly used to effect pass-by-reference 
+to function templates with generic parameter types. Writing a function template
+that can be used this way is naturally simplified with deduction guides.</p>
+<code>// Helper for converting reference wrappers to references
+template&lt;typename T&gt; struct unwrap { using type = T };
+template&lt;typename T&gt; struct unwrap&lt;std::reference_wrapper&lt;T&gt;&gt; { using type = T &amp; }
+template&lt;typename T&gt; using unwrap_t = typename unwrap&lt;T&gt;::type;
+
+template&lt;typename T&gt;
+void f(T t) { t.foo(); <span class="comment">/* ... */</span>}
+template&lt;T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;
+
+struct X { void foo(); <span class="comment">/* ... */</span>};
+int main()
+{
+	X x;
+	f(ref(x)); <span class="comment">// Passes by reference as desired. Ill-formed without deduction guide</span>
+}
+</code>
+<p><b>Note:</b> In C++ 17, something similar may be accomplished by rewriting <tt>f</tt> as
+<code>template&lt;typename T&gt; void f(T t) 
+{
+	remove_reference_t&lt;unwrap_t&lt;T&gt;&gt; &amp;actualT{t};
+	actualT.foo(); <span class="comment">/* ... */</span> 
+}</code>
+However, not only is this more awkward in our opinion, it requires that the user of <tt>f</tt> look inside the implementation of <tt>f</tt> to understand
+that it conforms to the &ldquo;<tt>reference_wrapper</tt> mini-language&rdquo;, whereas the proposed version
+advertises that in the interface.</p>
+<h4>Example: Efficient parameter passing</h4>
+<p>For function templates that accept a <tt>const</tt> argument, it is generally most efficient to pass
+small argument types, such as <tt>int</tt>, by value and large or uncopyable types by <tt>const &amp;</tt>.
+The Boost Call Traits library has a <tt>call_traits&lt;T&gt;::param_type</tt> traits that gives the
+most efficient way to pass, but it is awkward to to use. 
+<code>// C++17
+template&lt;typename T&gt; void do_f(T t); <span class="comment">// Implements f</span>
+
+template&lt;typename T&gt; inline void f(T &amp;&amp; t)
+{
+	do_f&lt;typename boost::call_traits&lt;decay_t&lt;T&gt;&gt;::type&gt;(t);
+}</code>
+With deduction guides, this again naturally simplifies to a form that no longer requires examining the body of <tt>f</tt>
+<code>template&lt;typename T&gt; void f(T t); <span class="comment">// Implement here. No need to delegate</span>
+template&lt;typename T&gt; f(T t) -> f&lt;typename boost::call_traits&lt;T&gt;::type&gt;;</code>
+	
+	
+<h2>Argument deduction for function templates</h2>
+For example, the following code would be natural and useful
+<code>template&lt;typename T&gt; void f(optional&lt;T&gt;);
+<span class="comment">/* ... */</span>
+f(7); // Would like to deduce optional&lt;int&gt;
+</code>
+Note that pending a consensus around terse notation, we are not proposing to allow declarations of function templates without the <tt>template</tt> keyword. 
+<code>void f(optional); <span class="comment">// Not part of this proposal</span>
+<span class="comment">/* ... */</span>
+f(7); // optional&lt;int&gt;
+</code>
+	
+	
+<h2>Return Type deduction for functions</h2>
+We propose extending C++ return type deduction to allow Class Template Argument Deduction as code like the following appears both useful and natural to us.
+<code>tuple f() { return {3, 5}; } // tuple&lt;int, int&gt;</code>
+All return statements that deduce should deduce the same type, and at least one return statement should be able to deduce a return type.
+<code>optional f() { return 7; }// optional&lt;int&gt;
+auto g() -> optional { if(noValue()) return {} else return 7; }// optional&lt;int&gt;
+optional h() { if(foo()) return "bar" else return 7; }// Ill-formed: Ambiguous
+</code>
+
+
+	
+	
+	<h2>Suppressing deduction</h2>
+	<h3>Deleted deduction guides</h3>
+	
+	When C++ automatically generates functions or methods, it generally allows
+	the programmer to suppress the generation of function bodies through the use of <tt>= delete;</tt>.
+	E.g. <code>template&lt;typename T&gt; struct A {  A(T t); <span class="comment">/* ... */ </span>};
+
+template&lt;typename T&gt;
+auto makeA(T t) -&gt; A&lt;T&gt; { return t; }
+auto makeA(double) = delete; 
+auto makeA(int) -&gt; A&lt;int&gt; = delete;
+template&lt;&gt; makeA&lt;long&gt; -&gt; A&lt;long&gt; = delete;
+</code>
+<p>It seems very odd that ordinary template functions can be deleted but deduction guides cannot. Indeed, this was proposed in <a href="www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0091r4.html">Template argument deduction for class templates (Rev. 7)</a> with a vote in favor of adding to C++17 as a DR (we would also be OK with C++20 as a ship vehicle). For consistency, the same rules should apply as for deleting function templates.
+<code></code></p> We contend that 
+supporting <tt>= delete</tt> for deduction guides not only increases consistency but has worthwhile use cases as well.<p>
+<h4>Example: <tt>unique_ptr</tt></h4>
+<p>If we imagine a slightly simplified version of <tt>unique_ptr</tt> that had a <tt>unique_ptr&lt;T&gt;::unique_ptr(T *)</tt> constructor, this would yield a type-unsafe deduction of <tt>T</tt> as <tt>int</tt> when deducing from an <tt>int *</tt> even if <tt>int[]</tt> would be correct. As a result, library writers would have to resort to ugly workarounds such as deducing an invalid type like <tt>unique_ptr&lt;void&gt;</tt>. Allowing deduction guides to be deleted would provide a clear and uniform solution to such situations with either of the following:
+<code>template&lt;typename T&gt; unique_ptr(T *) = delete; <span class="comment">// OK</span>
+template&lt;typename T&gt; unique_ptr(T *) -&gt; unique_ptr&lt;T&gt; = delete; <span class="comment">// Also OK</span></code></p>
+
+	
+
+<h3>Suppressing participation in overload resolution</h3>
+When a function or method is deleted with <tt>= delete</tt>, it still participates on overload resolution. However, it may be desirable to delete it from the overload set as well. There was a long debate in Kona over whether <tt>reverse_iterator(reverse_iterator&lt;T&gt;)</tt> should deduce to <tt>reverse_iterator&lt;T&gt;</tt> (copying) or <tt>reverse_iterator&lt;reverse_iterator&lt;T&gt;&gt;</tt> (wrapping). Although it was voted (we believe correctly) that copying should be preferred, it was generally accepted that there were use cases where wrapping would make sense. If we wanted to enshrine this in the type system with a <tt>wrapping_reverse_iterator&lt;T&gt;</tt>, we would want to entirely obliterate the implicitly-generated deduction guide from the copy constructor with a different type of deletion (bikeshed: <tt>= default delete</tt>) that also removed the guide from overload resolution.
+	
+<code>template&lt;typename T&gt; 
+wrapping_reverse_iterator(wrapping_reverse_iterator&lt;T&gt; const &amp;) -&gt; wrapping_reverse_iteratory&lt;T&gt; = default delete;</code>
+The deduction guide must exactly match the existing (implicitly-generated) deduction guide that it is obliterating, including explicitly specifying the return type. (This seems most consistent with the existing rules for deleting specialization of function templates).
+
+<p>We believe this would be valuable for general functions and function templates, not just deduction guides. For example, a hypothetical wrapping version of <tt>any</tt> would like to remove the copy constructor from overload resolution.
+<code>struct wrapping_any {
+  wrapping_any(wrapping_any const &amp;) = default delete;
+  <span class="comment">/* ... */</span>
+};
+
+any a{3}; <span class="comment">// contains an int</span>
+any b{a}; <span class="comment">// also contains an int</span>
+
+wrapping_any wa{3}; <span class="comment">// contains an int</span>
+wrapping_any wb{wa}; <span class="comment">// contains a wrapping_any</span></code></p>
+	
+	
+<h4>Example: <tt>valarray</tt></h4>
+Consider the following example from &ldquo;P0433R1: Toward a resolution of US7 and US14: Integrating template
+deduction for class templates into the standard library.&rdquo;
+	<code>int iarr[] = {1, 2, 3};
+int *ip = iarr;
+valarray va(ip, 3); <span class="comment">// Deduces valarray&lt;int&gt;</span></code>
+The point is that the <tt>valarray&lt;T&gt;::valarray(const T *, size_t)</tt> constructor is a better match
+than the <tt>valarray&lt;T&gt;::valarray(const T &amp;, size_t)</tt> constructor, so <tt>valarray&lt;int&gt;</tt> is
+preferred over <tt>valarray&lt;int *&gt;</tt>. Given the typical usage of <tt>valarray</tt>, we believe that
+this is a reasonable default, and that is what we recommend in P0433R1.<p>
+However, it is worth noting that the proposed deletion mechanisms would have allowed us to make any other choice desired. For example, suppose we had wanted this deduction to be ambiguous for <tt>valarray</tt> or a similar class. The natural
+	way to do this would be to delete the implicit deduction guide that takes a pointer.
+<code>template&lt;T&gt; valarray(const T *, size_t) -&gt; valarray&lt;T&gt; = delete;</code>
+<p>Likewise, supposed we had wished to deduce <tt>valarray&lt;int *&gt;</tt>. We could accomplish this as follows:
+<code>template&lt;T&gt; valarray(const T *, size_t) -&gt; valarray&lt;T&gt; = default delete;</code>
+</p>
+
+<h2>Class Template Argument Deduction and Partial specialization</h2>
+<p>In C++17, we deferred allowing CTAD to be applied to partially-specialized classes out of concern that interactions with default arguments could create a breaking change. Consider the following example
+<code>template&lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
+template &lt;typename T, typename U = T> A&lt;T, U&gt; makeA(T t, U u = U{}) { return A(t,  u); }
+
+auto a1 = A&lt;int&gt;(2, 3.5); <span class="comment">// C++17: A&lt;int, int&gt;</span>
+auto a2 = makeA&lt;int&gt;(2, 3.5); <span class="comment">// A&lt;int, double&gt;</span>
+</code>	
+<p>To add support for partially-specialized declarations, we would have to decide what we want <tt>A&lt;int&gt;(2, 3.5)</tt> to deduce. The options are</p>
+<ol><li><tt>A&lt;int, int&gt;</tt> as it currently does.</li>
+	<li><tt>A&lt;int, double&gt;</tt> as a function template like <tt>makeA()</tt> does.</li>
+	<li>Make it ambiguous when options 1 and option 2 would give a different answer.</li></ol>
+<p>We can compare these approaches with some motivating examples</p>	
+<code>map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{});
+<span class="comment">// The following example is adapted from Stroustrup, <em>The C++ Programming Language</em></span>
+auto v = vector&lt;XString&gt;(scoped_allocator_adaptor&lt;My_alloc&lt;Xstring&gt;&gt;{my_arena1});</code>After considering examples such as the above, we propose adopting approach 2 for the following reasons.
+	<ul><li>In both of the motivating examples, approach 2 deduces correctly while 1 and 3 fail to compile.</li>
+	<li>We think approach 2 makes the language more consistent by giving deduction guides the same deduction rules as function templates while options 1 and 3 (as well as current C++17 behavior) create differences in how deduction guides and make functions handle partial specializations.</li>
+<li>In cases where both approach 1 and 2 compile, we think that any differences in legacy code are due to bugs. E.g., in the (admittedly artificial) <tt>struct A</tt> example, the user almost certainly expects <tt>a2</tt> to be <tt>A&lt;int, double&gt; </tt> else why would they be passing it 3.5?</li>
+<li>If the legacy C++17 behavior is desired for some class, that can still be achieved with a deduction guide. However, the opposite is not the case if deduction guides cannot be used in partially-specialized declarations.</li></ul>
+<h2>Deducing from inherited constructors</h2>
+Users may find it surprising that the following code is ill-formed.
+<code>template  &lt;typename T&gt; struct A { A(T); };
+template&lt;typename T&gt; struct B : public A&lt;T&gt; { using A&lt;T&gt;::A; };
+A a{3}; <span class="comment">// Ill-formed. Inherited constructors do not implictly define deduction guides</span></code>
+This can make creating thin wrappers for classes (e.g., to just override a single method) cumbersome and error-prone. We propose as a simple and practical solution that if a class inherits constructors from a base class, it inherits all deduction guides (implicitly-generated and user-defined) from that base class that deduce values for all the template parameters of the derived class.
+<h2>Constructor Template Argument Deduction for alias templates</h2>
+C++17 allows deduction for <tt>vector</tt> in cases such as
+<code>vector v = {1, 2, 3}; <span class="comment">// vector &lt;int&gt;</span></code>
+However, equally desirable code for <tt>pmr::vector</tt> fails because <tt>pmr::vector</tt> is an alias template and not a class template
+<code>pmr::vector v = {1, 2, 3}; <span class="comment">// Ill formed. pmr::vector is not a class template</span></code>
+
+<p>We propose using the following rules for applying deduction guides to alias templates. Consider the following template.</p>
+<code>template&lt;typename T&gt; struct Y;
+template&lt;typename T&gt; Y(T) -&gt; Y&lt;T&gt;;
+template&lt;typename T>Y(T, int)
+	
+template&lt;typename U&gt; using X = Y&lt;U *&gt;;
+</code>
+For each (implicitly-generated or user-specified) deduction  guide of the class template, create a function template whose parameter is the right hand side of the deduction guide and whose argument is the alias template. For example, the deduction guide above becomes
+<code>template&lt;typename T&gt; void f(Y&lt;T&gt;);
+template&lt;typename U&gt; f(declval&lt;X&lt;U&gt;&gt;()); <span class="comment">// Now expand the type alias to get</span>
+template&lt;typename U&gt; f(declval&lt;Y&lt;U *&gt;&gt;()); <span class="comment">// Deduces U * for T</span></code>
+Now, substitute any value deduced for parameters for the  into the deduction guide. 
+<code>template&lt;typename U&gt; Y(U *) -&gt; Y&lt;U *&gt;;</code>
+Now, let us consider a more complex example
+<code>template&lt;</code>
+<h3>Bikeshed</h3>
+The name Class Template Argument Deduction is most commonly used for this feature. Given the applicability to type aliases, perhaps another name, such as Constructor Template Argument Deduction would be better.
+
+</body></html>
