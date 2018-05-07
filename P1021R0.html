@@ -68,16 +68,10 @@ of increased consistency, we provide the following motivating use cases.</p>
 <p><tt>std::reference_wrapper</tt> is commonly used to effect pass-by-reference 
 to function templates with generic parameter types. Writing a function template
 that can be used this way is naturally simplified with deduction guides.</p>
-<code>// Helper for converting reference wrappers to references
-template &lt;typename T&gt; struct unwrap { using type = T };
-template &lt;typename T&gt; struct unwrap&lt;std::reference_wrapper&lt;T&gt;&gt; { using type = T &amp; }
-template &lt;typename T&gt; using unwrap_t = typename unwrap&lt;T&gt;::type;
-
-template &lt;typename T&gt;
-void f(T t) { t.foo(); <span class="comment">/* ... */</span>}
-template &lt;T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;
-
-struct X { void foo(); <span class="comment">/* ... */</span>};
+<code>template &lt;typename T&gt; void f(T t) { t.foo(); <span class="comment">/* ... */</span>}
+template &lt;T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;</code>
+Now <tt>f</tt> will unwrap reference wrappers arguments.
+<code>struct X { void foo(); <span class="comment">/* ... */</span>};
 int main()
 {
 	X x;
@@ -85,12 +79,17 @@ int main()
 }
 </code>
 <p><b>Note:</b> In C++ 17, something similar may be accomplished by rewriting <tt>f</tt> as
-<code>template &lt;typename T&gt; void f(T t) 
+<code>// Helper for converting reference wrappers to references
+template &lt;typename T&gt; struct unwrap { using type = T };
+template &lt;typename T&gt; struct unwrap&lt;std::reference_wrapper&lt;T&gt;&gt; { using type = T &amp; }
+template &lt;typename T&gt; using unwrap_t = typename unwrap&lt;T&gt;::type;
+
+template &lt;typename T&gt; void f(T t) 
 {
 	remove_reference_t&lt;unwrap_t&lt;T&gt;&gt; &amp;actualT{t};
 	actualT.foo(); <span class="comment">/* ... */</span> 
 }</code>
-However, not only is this more awkward in our opinion, it requires that the user of <tt>f</tt> look inside the implementation of <tt>f</tt> to understand
+However, not only is this more cumbersome in our opinion, it requires that the user of <tt>f</tt> look inside the implementation of <tt>f</tt> to understand
 that it conforms to the &ldquo;<tt>reference_wrapper</tt> mini-language&rdquo;, whereas the proposed version
 advertises that in the interface.</p>
 <h4>Example: Efficient parameter passing</h4>
@@ -108,8 +107,21 @@ template &lt;typename T&gt; inline void f(T &amp;&amp; t)
 With deduction guides, this again naturally simplifies to a form that no longer requires examining the body of <tt>f</tt>
 <code>template &lt;typename T&gt; void f(T t); <span class="comment">// Implement here. No need to delegate</span>
 template &lt;typename T&gt; f(T t) -> f&lt;typename boost::call_traits&lt;T&gt;::type&gt;;</code>
-	
-	
+
+<h4>Example: Delayed forwarding</h4>
+The following example, due to Richard Smith, applies function deduction guides to delayed forwarding in order to convert to the callee's types in the caller. E.g., to eliminate the need to use <tt>std::ref</tt> if the callee expects a reference (this has been known to <a href="https://stackoverflow.com/questions/18359864/passing-ents-to-stdasync-by-reference-fails">bite</a> users of <tt>async</tt> as well as of <tt>thread</tt>'s constructor template).
+<code><span class="comment">// Assume p0945r0 and std::experimental::invocation_type</span>
+template&lt;typename F, typename R, typename ...T&gt;
+future&lt;R&gt; call_later(F fn, T ...t);
+
+template&lt;typename F, typename T&gt; struct call_later_helper;
+template&lt;typename F, typename R, typename ...T&lt; struct call_later_helper&lt;R(T...)&gt; {
+  using call_later = ::call_later&lt;F, R, T...&gt;;
+};
+
+template&lt;typename F, typename ...T&gt;
+call_later(F fn, T &amp;&amp;...t) -> call_later_helper&lt;F, invocation_type_t&lt;F, T&amp;&amp;...&gt;&gt;::call_later;
+</code>
 <h2>Argument deduction for function templates</h2>
 For example, we believe the following code would be natural and useful
 <code>template &lt;typename T&gt; void f(optional&lt;T&gt;);
@@ -121,7 +133,7 @@ g("foo"); // Would like to deduce g&lt;char, char_traits&lt;char&gt;&gt; with ar
 Note that pending a consensus around terse notation for concepts, this paper does not propose allowing declarations of function templates without the <tt>template</tt> keyword. 
 <code>void f(optional); <span class="comment">// Not part of this proposal</span>
 <span class="comment">/* ... */</span>
-f(7); <span class="comment">// Do not deduce l&lt;int&gt;</span>
+f(7); <span class="comment">// Does not deduce f&lt;int&gt;</span>
 </code>
 	
 	
@@ -144,11 +156,10 @@ especially when the following example does
 <code>template&lt;typename T, typename U&gt; struct TU_ { TU_{T t, U u} : t{t}, u{u} {}; T t; U u; };
 TU_&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
 TU_ tu2{1, 2.3}; <span class="comment">// OK. TU_&lt;int, double&gt;</span></code>
-We propose that a deduction guide of the following form be synthesized
-<code>template&lt;<span class="comment">template parameters of aggregate</span>&gt;
-Aggregate(<span class="comment">types of aggregate fields</span>) -&gt; Aggregate&lt;<span class="comment">template parameters of aggregate</span>&gt;;
-<span class="comment">// Original TU aggregate would implicitly generate the following deduction guide</span>
-template&lt;T, U&gt; TU(T, U) -&gt; TU&lt;T, U&gt;;</code>
+We propose that deduction takes place from the arguments. Rather than a deduction guide <em>per se</em>, this will need to use the same magic that aggregate initializers use to support the particular notations for aggregate initialization like <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0329r4.pdf">designated initializers</a>.
+<code>template&lt;typename T, typename U&gt; struct TUT { T t1; U u; T t2 = T{} };
+TUT tut1 = { 1, 2.3, 2 }; <span class="comment">// TUT&lt;int, double&gt;{1, 2.3, 2}</span>
+TUT tut2 = {.t1 = 3, u = 2.3 }; <span class="comment">// TUT&lt;int, double&gt;{3, 2.3, 0}</span></code>
 	
 	
 	<h2>Suppressing deduction</h2>
@@ -244,15 +255,15 @@ Users may find it surprising that the following code is ill-formed.
 <code>template &lt;typename T&gt; struct A { A(T); };
 template &lt;typename T&gt; struct B : public A&lt;T&gt; { using A&lt;T&gt;::A; };
 A a{3}; <span class="comment">// Ill-formed. Inherited constructors do not implictly define deduction guides</span></code>
-This can make creating thin wrappers for classes (e.g., to just override a single method) cumbersome and error-prone, especially since the author of the derived class may need to manually replicate not only all the user-defined deduction guides of the base class but also all of the base class' implicitly-defined deduction guides as well. As a result, we propose that inheriting constructors from a base class also inherits their implicit and explicit deduction guides as well.<p/>
-Of course, this only applies in cases where the derived classes template arguments are determined from the base class' template arguments. For example, <code>template&lt;typename T&gt; struct B { B(T t); <span class="comment">/* ... */</span>};
+This can make creating thin wrappers for classes (e.g., to just override a single method) cumbersome and error-prone, especially since the author of the derived class may need to manually replicate not only all the user-defined deduction guides of the base class but also all of the base class' implicitly-defined deduction guides as well. As a result, we propose that inheriting constructors from a base class also inherits their implicit and explicit deduction guides as well.<p>
+    Of course, this only applies in cases where the derived classes template arguments are determined from the base class' template arguments. For example,</p> <code>template&lt;typename T&gt; struct B { B(T t); <span class="comment">/* ... */</span>};
 template&lt;typename T, typename U&gt; struct D : B&lt;U&gt; {
-  using B&lt;T&gt;::B;
+  using B&lt;U&gt;::B;
   T t{};
 };
 
 B b{7}; <span class="comment">// B&lt;int&gt;</span>
 D d{7}; <span class="comment">// Ill-formed</span>
 D&lt;double&gt; d2{7}; <span class="comment">// D&lt;double, int&gt; by CTAD proposal for partially-specialized argument lists above</span></code>
-In spite of this, we think this extension is worthwhile since, inherited constructors tend to have at least somewhat philosophically similar requirements that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
+We suspect the feature will be useful and that counterexamples such as <tt>struct D</tt> will be the exception since inherited constructors also tend to require (admittedly with some differences) that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
 </body></html>
