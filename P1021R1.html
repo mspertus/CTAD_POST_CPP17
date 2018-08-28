@@ -67,32 +67,34 @@ We have several main motivations for extending Class Template Argument Deduction
 As Timur Doumler notes when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which is always negatively received because it is accurately regarded as inconsistent. In particular, listeners are invariably surprised that deduction guides are not implicitly generated for aggregate templates, type aliases, or inherited constructors. We will show in this paper
 that these limitations can be safely removed.  
 
-<h3>Making Class Template Argument Deduction like Function Template Argument Deduction</h3>
-<p>Likewise, even though the original motivation for CTAD was to replace make functions as described in the section on
+<h3>Ensure Class Template Argument Deduction is like Function Template Argument Deduction</h3>
+<p>Having Class Template Argument Deduction act just like Function Template Argument Deduction not only simplifies
+	and the language by making it more consistent, it is also very useful.
+	For example, even though the original motivation for CTAD was to replace make functions as described in the section on
 Template Argument Deduction for Constructors in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3405.html#deduction">n3405</a>, it has
 unnecessary restrictions that can keep them from being used in place of make functions. In particular,
 they cannot be used with partially-specialized template argument lists:
 <code>auto t = make_tuple&lt;int&gt;('a', []() { <span class="comment">/* ... */</span>}); <span class="comment">// OK</span>
 auto t = tuple&lt;int&gt;('a', []() { <span class="comment">/* ... */</span>}); <span class="comment">// Ill-formed!</span>
 
-<span class="comment">// More useful example due to Nico Josuttis</span>
-std::set&lt;Building&gt; buildings([](Building a, Building b) { return a.height() &lt; b.height(); }); <span class="comment">// Ill-formed :(</span></code>
+<span class="comment">// Doesn't just apply to artificial examples</span>
+map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{}); <span class="comment">// Ill-formed :(</span></code>
 
 <p>We also discuss several other useful ways to make Class Template Argument Deduction like Function Template Argument Deduction</p>
 <h3>Help make terse notation a success</h3>
 <p>If C++20 includes terse notation, having safe easy coding without requiring names for types becomes especially important. Indeed, we believe that the better CTAD works, the more positive the experience with terse notation will be. Consider the following example along the lines of 
-	<a href="http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0669r0.pdf">P0669</a>, (notation from
+	<a href="http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0669r0.pdf">P0669</a>, (constraint notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>).
     To see the relevance of CTAD, let us first write the example without CTAD:</p>
     <code>auto f(Shape auto &amp;s, Shape auto &amp; t) -> pair&lt;decltype(s), decltype(t.x)&gt;
 {
-  Point&lt;decltype(t.x)&gt; p{s.x, s.y};
+  point&lt;decltype(t.x)&gt; p{s.x, s.y};
   screen->line&lt;decltype(t.x)&gt;(p, {t.x, t.y});
   return {s, t.x };
 };
 </code>
     With CTAD, including the additions in this paper, the above code becomes simply
-<code>pair f(Shape auto &amp;s, Shape auto &amp;t)
+<code>pair auto f(Shape auto &amp;s, Shape auto &amp;t)
 {
   point p{s.x, s.y};
   screen->line(p, {t.x, t.y});
@@ -100,19 +102,26 @@ std::set&lt;Building&gt; buildings([](Building a, Building b) { return a.height(
 };
 </code>
 
-More deeply, one can think of CTAD as a kind of dual companion to terse notation. Terse notation
-describes constrained use of objects, while CTAD can be thought of as describing constrained creation of objects.
+More deeply, we think it is not surprising that terse notation and Class Template Argument
+	Deduction work so well together since they address dual problems: Terse notation
+describes what types may be inferenced when using objects, while Class Template Argument Deduiction describes
+	what types may be inferenced when creating objects.
 
 <h2>Fixing omissions in the original specification</h2>
 <h3>Class Template Argument Deduction for aggregates</h3>
-It seems awkward to us that the following does not work
+In C++17, one has to artificially sacrifice aggregate initialization if they want deduction
+because the following does not work:
 <code>template&lt;typename T, typename U&gt; struct TU { T t; U u; };
 TU&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
 TU tu2{1, 2.3}; <span class="comment">// Ill-formed</span></code>
-especially when the following example does
-<code>template&lt;typename T, typename U&gt; struct TU_ { TU_{T t, U u} : t{t}, u{u} {}; T t; U u; };
-TU_&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
-TU_ tu2{1, 2.3}; <span class="comment">// OK. TU_&lt;int, double&gt;</span></code>
+while making <tt>TU</tt> deducible removes aggregate nature
+<code>template&lt;typename T, typename U&gt; struct TU { TU{T t, U u} : t{t}, u{u} {}; T t; U u; };
+TU&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
+TU tu2{1, 2.3}; <span class="comment">// OK, works now. TU_&lt;int, double&gt;</span>
+<span class="comment">// Oops, is_aggregate&lt;TU&gt; is no longer true, so TU can no longer be used where aggregates are expected</span>
+TU tu3 = {.t = 4, .u = 5.6}; <span class="comment">// Oops, now ill-formed</span>
+</code>
+
 We propose that deduction takes place from the arguments. Rather than a deduction guide <em>per se</em>, this will need to use the same magic that aggregate initializers use to support the particular notations for aggregate initialization like <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0329r4.pdf">designated initializers</a>.
 <code>template&lt;typename T, typename U&gt; struct TUT { T t1; U u; T t2 = T{} };
 TUT tut1 = { 1, 2.3, 2 }; <span class="comment">// TUT&lt;int, double&gt;{1, 2.3, 2}</span>
@@ -142,12 +151,14 @@ B b{7}; <span class="comment">// B&lt;int&gt;</span>
 D d{7}; <span class="comment">// Ill-formed</span>
 D&lt;double&gt; d2{7}; <span class="comment">// D&lt;double, int&gt; by CTAD proposal for partially-specialized argument lists above</span></code>
 We suspect the feature will be useful and that counterexamples such as <tt>struct D</tt> will be the exception since inherited constructors also tend to require (admittedly with some differences) that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
-
+<p>Note that inheriting the constructors of a base class must include inheriting all the deduction guides, not just the implicit ones. As a number of standard library
+writers use explicit guides to behave &ldquo;as-if&rdquo; their classes were defined as in the standard, such internal implementation details
+details would become visible if only the internal guides were inherited.</p>
 	<h2>Making Class Template Argument Deduction like Function Template Argument Deduction</h2>
 <h3>Class Template Argument Deduction and partially-specialized template argument lists</h3>
 <b>Motivating examples: </b>
     Comparators are often cited as a good use for lambdas and are commonly passed to std::sort.
-    However, in C++17 or earlier, it is hard to 
+    However, in C++17 or earlier, as Nico Josuttis points out, it is hard to 
     <code>set&lt;Building&gt; s([](int x, int y) { return x.height &lt; y.height; });</code>
 <p>In C++17, we deferred allowing CTAD to be applied in declarations with partially-specialized template argument lists out of concern that interactions with default arguments could create a breaking change. Consider the following example
 <code>template &lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
@@ -176,9 +187,8 @@ template &lt;typename CharT, typename Traits&gt; void g(basic_string_view&lt;Cha
 <span class="comment">/* ... */</span>
 f(7);     // Would like to deduce f&lt;int&gt; with arg of optional&lt;int&gt;
 </code>
-To see just how useful this is, allowing CTAD to deduction arguments of function templates would have trivially
-allowed all three &ldquo;output&rdquo; overloads of <tt>std::quoted</tt> to be trivially subsumed in just the <tt>quoted(basic_string_view&lt;charT, traits&gr;, charT, charT)</tt> constructor. Just think how much simpler it would to get functions like the &ldquo;output&rdquo; form of
-	<tt>std::quoted</tt> correct and consistent if instead of manually writing all of the following overloads
+To see just how useful this is, we just need to go back to examples like creating the &ldquo;output&rdquo; form of
+	<tt>std::quoted</tt> where all of the following functions
 <code>template&lt;class charT&gt;
 T11 quoted(const charT* s, charT delim = charT(’"’), charT escape = charT(’\\’));
 template&lt;class charT, class traits, class Allocator&gt;
@@ -187,11 +197,11 @@ charT delim = charT(’"’), charT escape = charT(’\\’));
 template&lt;class charT, class traits, class Allocator&gt;
 T14 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
 charT delim = charT(’"’), charT escape = charT(’\\’));</code>
-we only had to write the <tt>basic_string_view</tt> constructor
+could have been correctly, naturally, and consistently subsumed as
 <code>T14 quoted(basic_string&lt;charT, traits, Allocator&gt;&amp; s,
 charT delim = charT(’"’), charT escape = charT(’\\’));</code>
-	The additional boilerplate is error-prone and exists only because the language cannot make the obvious constructor
-	deduction, even though it can do so for any declarations that are not arguments.
+	The additional boilerplate is error-prone and existed only because the language cannot make the obvious constructor
+	deduction, even though it could do so for any declarations that are not arguments.
 
 	
 <h3>Deduction guides for function templates</h3>
@@ -258,12 +268,13 @@ call_later(F fn, T &amp;&amp;...t) -> call_later_helper&lt;F, invocation_type_t&
 </code>
 
 	
-<h2>Help make terse notation a success</h2>	
-As described in the rationale above, terse notation works better in the presence of Class Template Argument Deduction in general.
+<h2>Aligning with terse notation</h2>	
+As described in the rationale above, terse notation already works better in the presence of Class Template Argument Deduction in general.
 	However, the <b>Relaxed &ldquo;constraint <tt>auto</tt>&rdquo;</b> section of P1141R0 notes that the relationship is even closer
 	than that, proposing that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>. Indeed, the language is simplified
 	by consistently aligning CTAD to terse notation. Indeed, just as P1141R0 proposes the principle that &ldquo;wherever <tt>auto</tt> goes,
-	a <tt>Constraint auto</tt> can also (non-recursively) go&rdquo;, we think a <tt>ClassTemplateName auto</tt> can also go. Let us
+	a <tt>Constraint auto</tt> can also (non-recursively) go&rdquo;, we think a <tt>ClassTemplateName auto</tt> can also go. In particular,
+	we believe there is no reason to have different rules for where <tt>auto</tt> can be used to indicate type inference. Let us
 	look at the different cases.
 <h3>Allowing <tt>auto</tt> for declarations</h3>
 Just like P1141R0 says that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>, we should also allow
