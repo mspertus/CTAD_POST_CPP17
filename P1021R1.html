@@ -53,7 +53,7 @@ h4 {
 </head>
 
 <body>
-<p>P1021R0<br>
+<p>P1021R1<br>
 Mike Spertus, Symantec<br>
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
 2018-05-07<br>
@@ -61,6 +61,48 @@ Audience: Evolution Working Group
 </p>
 <h1>Extensions to Class Template Argument Deduction</h1>
 This paper proposes several recommended extensions to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>
+<h2>Rationale</h2>
+There are several reasons to extend Class Template Argument Deduction in C++20
+<h3>Fix artificial limitations in the original specification</h3>
+As Timur Doumler notes, when he gives presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which is always negatively received because it is accurately regarded as inconsistent. As just one example, listeners are invariably surprised that deduction guides are not implicitly generated for aggregate templates.
+
+<h3>Supporting a successful introduction of terse notation</h3>
+<p>If C++20 includes terse notation, CTAD goes from a (significant) 
+    terse program paradigm by enabling safe easy coding without requiring names for types. Consider the following example, where <tt>Shape</tt> is a concept, (notation from
+    <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>).
+    To see the relevance of CTAD, let us first write the example without CTAD:</p>
+    <code>auto f(Shape auto &amp;s, Shape auto &amp; t) -> pair&lt;decltype(s), decltype(t.x)&gt;
+{
+  optional&lt;decltype(s)&gt; o{s};
+  Point&lt;decltype(t.x)&gt; p{s.x, s.y};
+  screen->line&lt;decltype(t.x)&gt;(p, {t.x, t.y});
+  return {s, t.x };
+};
+</code>
+    With CTAD, including the additions in this paper, the above code becomes
+<code>
+pair f(Shape auto &amp;s, Shape auto &amp;t)
+{
+  optional o{s}; 
+  point p{s.x, s.y};
+  screen->line(p, {t.x, t.y});
+  return {s, t.x };
+};
+</code>
+<h2>Class Template Argument Deduction for aggregates</h2>
+It seems awkward to us that the following does not work
+<code>template&lt;typename T, typename U&gt; struct TU { T t; U u; };
+TU&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
+TU tu2{1, 2.3}; <span class="comment">// Ill-formed</span></code>
+especially when the following example does
+<code>template&lt;typename T, typename U&gt; struct TU_ { TU_{T t, U u} : t{t}, u{u} {}; T t; U u; };
+TU_&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
+TU_ tu2{1, 2.3}; <span class="comment">// OK. TU_&lt;int, double&gt;</span></code>
+We propose that deduction takes place from the arguments. Rather than a deduction guide <em>per se</em>, this will need to use the same magic that aggregate initializers use to support the particular notations for aggregate initialization like <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0329r4.pdf">designated initializers</a>.
+<code>template&lt;typename T, typename U&gt; struct TUT { T t1; U u; T t2 = T{} };
+TUT tut1 = { 1, 2.3, 2 }; <span class="comment">// TUT&lt;int, double&gt;{1, 2.3, 2}</span>
+TUT tut2 = {.t1 = 3, u = 2.3 }; <span class="comment">// TUT&lt;int, double&gt;{3, 2.3, 0}</span></code>
+	
 <h2>Deduction guides for function templates</h2>
 <p>We propose allowing deduction guides for function templates. In addition to the (not to be underestimated) value
 of increased consistency, we provide the following motivating use cases.</p>
@@ -146,83 +188,13 @@ auto g() -> optional { if(noValue()) return {} else return 7; } <span class="com
 optional h() { if(foo()) return "bar" else return 7; }          <span class="comment">// Ill-formed: Ambiguous</span>
 </code>
 
-
-<h2>Class Template Argument Deduction for aggregates</h2>
-It seems awkward to us that the following does not work
-<code>template&lt;typename T, typename U&gt; struct TU { T t; U u; };
-TU&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
-TU tu2{1, 2.3}; <span class="comment">// Ill-formed</span></code>
-especially when the following example does
-<code>template&lt;typename T, typename U&gt; struct TU_ { TU_{T t, U u} : t{t}, u{u} {}; T t; U u; };
-TU_&lt;int, double&gt; tu{1, 2.3}; <span class="comment">// OK</span>
-TU_ tu2{1, 2.3}; <span class="comment">// OK. TU_&lt;int, double&gt;</span></code>
-We propose that deduction takes place from the arguments. Rather than a deduction guide <em>per se</em>, this will need to use the same magic that aggregate initializers use to support the particular notations for aggregate initialization like <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0329r4.pdf">designated initializers</a>.
-<code>template&lt;typename T, typename U&gt; struct TUT { T t1; U u; T t2 = T{} };
-TUT tut1 = { 1, 2.3, 2 }; <span class="comment">// TUT&lt;int, double&gt;{1, 2.3, 2}</span>
-TUT tut2 = {.t1 = 3, u = 2.3 }; <span class="comment">// TUT&lt;int, double&gt;{3, 2.3, 0}</span></code>
 	
-	
-	<h2>Suppressing deduction</h2>
-	<h3>Deleted deduction guides</h3>
-	
-	When C++ automatically generates functions or methods, it generally allows
-	the programmer to suppress the generation of function bodies through the use of <tt>= delete;</tt>.
-	E.g. <code>template &lt;typename T&gt; struct A {  A(T t); <span class="comment">/* ... */ </span>};
-
-template &lt;typename T&gt;
-auto makeA(T t) -&gt; A&lt;T&gt; { return t; }
-auto makeA(double) = delete; 
-auto makeA(int) -&gt; A&lt;int&gt; = delete;
-template &lt;&gt; makeA&lt;long&gt; -&gt; A&lt;long&gt; = delete;
-</code>
-<p>It seems very odd that ordinary template functions can be deleted but deduction guides cannot. Indeed, this was proposed in <a href="www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0091r4.html">Template argument deduction for class templates (Rev. 7)</a> with a vote in favor of adding to C++17 as a DR (we would also be OK with C++20 as a ship vehicle). For consistency, the same rules should apply as for deleting function templates.
-<code></code></p> We contend that 
-supporting <tt>= delete</tt> for deduction guides not only increases consistency but has worthwhile use cases as well.<p>
-<h4>Example: <tt>unique_ptr</tt></h4>
-<p>If we imagine a slightly simplified version of <tt>unique_ptr</tt> that had a <tt>unique_ptr&lt;T&gt;::unique_ptr(T *)</tt> constructor, this would yield a type-unsafe deduction of <tt>T</tt> as <tt>int</tt> when deducing from an <tt>int *</tt> even if <tt>int[]</tt> would be correct. As a result, library writers would have to resort to ugly workarounds such as deducing an invalid type like <tt>unique_ptr&lt;void&gt;</tt>. Allowing deduction guides to be deleted would provide a clear and uniform solution to such situations with either of the following:
-<code>template &lt;typename T&gt; unique_ptr(T *) = delete; <span class="comment">// OK</span>
-template &lt;typename T&gt; unique_ptr(T *) -&gt; unique_ptr&lt;T&gt; = delete; <span class="comment">// Also OK</span></code></p>
-
-	
-
-<h3>Suppressing participation in overload resolution</h3>
-When a function or method is deleted with <tt>= delete</tt>, it still participates on overload resolution. However, it may be desirable to delete it from the overload set as well. There was a long debate in Kona over whether <tt>reverse_iterator(reverse_iterator&lt;T&gt;)</tt> should deduce to <tt>reverse_iterator&lt;T&gt;</tt> (copying) or <tt>reverse_iterator&lt;reverse_iterator&lt;T&gt;&gt;</tt> (wrapping). Although it was voted (we believe correctly) that copying should be preferred, it was generally accepted that there were use cases where wrapping would make sense. If we wanted to enshrine this in the type system with a <tt>wrapping_reverse_iterator&lt;T&gt;</tt>, we would want to entirely obliterate the implicitly-generated deduction guide from the copy constructor with a different type of deletion (bikeshed: <tt>= default delete</tt>) that also removed the guide from overload resolution.
-	
-<code>template &lt;typename T&gt; 
-wrapping_reverse_iterator(wrapping_reverse_iterator&lt;T&gt; const &amp;) -&gt; wrapping_reverse_iteratory&lt;T&gt; = default delete;</code>
-The deduction guide must exactly match the existing (implicitly-generated) deduction guide that it is obliterating, including explicitly specifying the return type. (This seems most consistent with the existing rules for deleting specialization of function templates).
-
-<p>We believe this would be valuable for general functions and function templates, not just deduction guides. For example, a hypothetical wrapping version of <tt>any</tt> would like to remove the copy constructor from overload resolution.
-<code>struct wrapping_any {
-  wrapping_any(wrapping_any const &amp;) = default delete;
-  <span class="comment">/* ... */</span>
-};
-
-any a{3}; <span class="comment">// contains an int</span>
-any b{a}; <span class="comment">// also contains an int</span>
-
-wrapping_any wa{3}; <span class="comment">// contains an int</span>
-wrapping_any wb{wa}; <span class="comment">// contains a wrapping_any</span></code></p>
-	
-	
-<h4>Example: <tt>valarray</tt></h4>
-Consider the following example from &ldquo;P0433R1: Toward a resolution of US7 and US14: Integrating template
-deduction for class templates into the standard library.&rdquo;
-	<code>int iarr[] = {1, 2, 3};
-int *ip = iarr;
-valarray va(ip, 3); <span class="comment">// Deduces valarray&lt;int&gt;</span></code>
-The point is that the <tt>valarray&lt;T&gt;::valarray(const T *, size_t)</tt> constructor is a better match
-than the <tt>valarray&lt;T&gt;::valarray(const T &amp;, size_t)</tt> constructor, so <tt>valarray&lt;int&gt;</tt> is
-preferred over <tt>valarray&lt;int *&gt;</tt>. Given the typical usage of <tt>valarray</tt>, we believe that
-this is a reasonable default, and that is what we recommend in P0433R1.<p>
-However, it is worth noting that the proposed deletion mechanisms would have allowed us to make any other choice desired. For example, suppose we had wanted this deduction to be ambiguous for <tt>valarray</tt> or a similar class. The natural
-	way to do this would be to delete the implicit deduction guide that takes a pointer.
-<code>template &lt;T&gt; valarray(const T *, size_t) -&gt; valarray&lt;T&gt; = delete;</code>
-<p>Likewise, supposed we had wished to deduce <tt>valarray&lt;int *&gt;</tt>. We could accomplish this as follows:
-<code>template &lt;T&gt; valarray(const T *, size_t) -&gt; valarray&lt;T&gt; = default delete;</code>
-</p>
 
 <h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
+<b>Motivating examples: </b>
+    Comparators are often cited as a good use for lambdas and are commonly passed to std::sort.
+    However, in C++17 or earlier, it is hard to 
+    <code>set&lt;Building&gt; s([](int x, int y) { return x.height &lt; y.height; });</code>
 <p>In C++17, we deferred allowing CTAD to be applied in declarations with partially-specialized template argument lists out of concern that interactions with default arguments could create a breaking change. Consider the following example
 <code>template &lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
 template &lt;typename T, typename U = T> A&lt;T, U&gt; makeA(T t, U u = U{}) { return A(t,  u); }
@@ -266,4 +238,5 @@ B b{7}; <span class="comment">// B&lt;int&gt;</span>
 D d{7}; <span class="comment">// Ill-formed</span>
 D&lt;double&gt; d2{7}; <span class="comment">// D&lt;double, int&gt; by CTAD proposal for partially-specialized argument lists above</span></code>
 We suspect the feature will be useful and that counterexamples such as <tt>struct D</tt> will be the exception since inherited constructors also tend to require (admittedly with some differences) that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
+<h2>Appendix: Comparison of function templates and constructors of class templates</h2>
 </body></html>
