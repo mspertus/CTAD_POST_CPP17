@@ -281,5 +281,10 @@ optional h() { if(foo()) return "bar" else return 7; }          <span class="com
 <h3><tt>auto</tt> deduction for arguments</h3>
 If I write a text processing function, I would like to simply be able to say
 <code>void process_text(string_view auto x);</code>
-just like I would with any template concept.
-</body></html>
+just like I would with any template concept. As already noted in the discussion of <tt>std::quoted</tt> above, this would
+also properly accept strings and character pointers of all types.
+</body>
+<h2>Wording</h2>
+<h2>Appendix</h2>
+Table of all changes, their complexity, and risk. The idea is that very simple ones may be accepted.
+</html>
