@@ -62,11 +62,12 @@ Audience: Evolution Working Group
 <h1>Extensions to Class Template Argument Deduction</h1>
 This paper proposes several recommended extensions to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>
 <h2>Rationale</h2>
-We have two main motivations for extending Class Template Argument Deduction in C++20
-<h3>Fix artificial limitations in the original specification</h3>
+We have several main motivations for extending Class Template Argument Deduction in C++20
+<h3>Fix omissions in the original specification</h3>
 As Timur Doumler notes when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which is always negatively received because it is accurately regarded as inconsistent. In particular, listeners are invariably surprised that deduction guides are not implicitly generated for aggregate templates, type aliases, or inherited constructors. We will show in this paper
 that these limitations can be safely removed.  
 
+<h3>Making Class Template Argument Deduction like Function Template Argument Deduction</h3>
 <p>Likewise, even though the original motivation for CTAD was to replace make functions as described in the section on
 Template Argument Deduction for Constructors in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3405.html#deduction">n3405</a>, it has
 unnecessary restrictions that can keep them from being used in place of make functions. In particular,
@@ -76,8 +77,11 @@ auto t = tuple&lt;int&gt;('a', []() { <span class="comment">/* ... */</span>}); 
 
 <span class="comment">// More useful example due to Nico Josuttis</span>
 std::set&lt;Building&gt; buildings([](Building a, Building b) { return a.height() &lt; b.height(); }); <span class="comment">// Ill-formed :(</span></code>
+
+<p>We also discuss several other useful ways to make Class Template Argument Deduction like Function Template Argument Deduction</p>
 <h3>Help make terse notation a success</h3>
-<p>If C++20 includes terse notation, having safe easy coding without requiring names for types becomes especially important. Indeed, we believe that the better CTAD works, the more positive the experience with terse notation will be. Consider the following example, where <tt>Shape</tt> is a concept, (notation from
+<p>If C++20 includes terse notation, having safe easy coding without requiring names for types becomes especially important. Indeed, we believe that the better CTAD works, the more positive the experience with terse notation will be. Consider the following example along the lines of 
+	<a href="http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0669r0.pdf">P0669</a>, (notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>).
     To see the relevance of CTAD, let us first write the example without CTAD:</p>
     <code>auto f(Shape auto &amp;s, Shape auto &amp; t) -> pair&lt;decltype(s), decltype(t.x)&gt;
@@ -99,7 +103,7 @@ std::set&lt;Building&gt; buildings([](Building a, Building b) { return a.height(
 More deeply, one can think of CTAD as a kind of dual companion to terse notation. Terse notation
 describes constrained use of objects, while CTAD can be thought of as describing constrained creation of objects.
 
-<h2>Removing limitations</h2>
+<h2>Fixing omissions in the original specification</h2>
 <h3>Class Template Argument Deduction for aggregates</h3>
 It seems awkward to us that the following does not work
 <code>template&lt;typename T, typename U&gt; struct TU { T t; U u; };
@@ -138,9 +142,62 @@ B b{7}; <span class="comment">// B&lt;int&gt;</span>
 D d{7}; <span class="comment">// Ill-formed</span>
 D&lt;double&gt; d2{7}; <span class="comment">// D&lt;double, int&gt; by CTAD proposal for partially-specialized argument lists above</span></code>
 We suspect the feature will be useful and that counterexamples such as <tt>struct D</tt> will be the exception since inherited constructors also tend to require (admittedly with some differences) that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
-<h2>Deduction guides for function templates</h2>
-<p>We propose allowing deduction guides for function templates. In addition to the (not to be underestimated) value
-of increased consistency, we provide the following motivating use cases.</p>
+
+	<h2>Making Class Template Argument Deduction like Function Template Argument Deduction</h2>
+<h3>Class Template Argument Deduction and partially-specialized template argument lists</h3>
+<b>Motivating examples: </b>
+    Comparators are often cited as a good use for lambdas and are commonly passed to std::sort.
+    However, in C++17 or earlier, it is hard to 
+    <code>set&lt;Building&gt; s([](int x, int y) { return x.height &lt; y.height; });</code>
+<p>In C++17, we deferred allowing CTAD to be applied in declarations with partially-specialized template argument lists out of concern that interactions with default arguments could create a breaking change. Consider the following example
+<code>template &lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
+template &lt;typename T, typename U = T> A&lt;T, U&gt; makeA(T t, U u = U{}) { return A(t,  u); }
+
+auto a1 = A&lt;int&gt;(2, 3.5); <span class="comment">// C++17: A&lt;int, int&gt;</span>
+auto a2 = makeA&lt;int&gt;(2, 3.5); <span class="comment">// A&lt;int, double&gt;</span>
+</code>	
+<p>To add support for partially-specialized template argument lists in declarations, we would have to decide what we want <tt>A&lt;int&gt;(2, 3.5)</tt> to deduce. The options are</p>
+<ol><li><tt>A&lt;int, int&gt;</tt> as it currently does.</li>
+	<li><tt>A&lt;int, double&gt;</tt> as a function template like <tt>makeA()</tt> does.</li>
+	<li>Make it ambiguous when options 1 and option 2 would give a different answer.</li></ol>
+<p>We can compare these approaches with some motivating examples (assuming the deduction guides like those in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0433r3.html">P0433R3</a>)</p>	
+<code>map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{});
+auto v = vector&lt;int&gt;(MyAlloc&lt;int&gt;{});</code>After considering examples such as the above, we propose adopting approach 2 for the following reasons.
+	<ul><li>In both of the motivating examples, approach 2 deduces correctly while 1 and 3 fail to compile.</li>
+	<li>We think approach 2 makes the language more consistent by giving deduction guides the same deduction rules as function templates while options 1 and 3 (as well as current C++17 behavior) create differences in how deduction guides and make functions handle partial specializations.</li>
+<li>In cases where both approach 1 and 2 compile, we think that any differences in legacy code have a high likelihood of being due to bugs. E.g., in the (admittedly artificial) <tt>struct A</tt> example, the user almost certainly expects <tt>a2</tt> to be <tt>A&lt;int, double&gt; </tt> else why would they be passing it 3.5?</li>
+<li>If the legacy C++17 behavior is desired for some class, that can still be achieved with a deduction guide. However, the opposite is not the case if deduction guides cannot be used in partially-specialized template argument lists in declarations.</li></ul>
+
+	<h3>Argument deduction for function templates</h3>
+Using Class Template Argument Deduction for Function Template Arguments also greatly simplifies common programming tasks.
+For example, we believe the following code would be natural and useful
+<code>template &lt;typename T&gt; void f(optional&lt;T&gt;);
+template &lt;typename CharT, typename Traits&gt; void g(basic_string_view&lt;CharT, Traits&gt;);
+<span class="comment">/* ... */</span>
+f(7);     // Would like to deduce f&lt;int&gt; with arg of optional&lt;int&gt;
+</code>
+To see just how useful this is, allowing CTAD to deduction arguments of function templates would have trivially
+allowed all three &ldquo;output&rdquo; overloads of <tt>std::quoted</tt> to be trivially subsumed in just the <tt>quoted(basic_string_view&lt;charT, traits&gr;, charT, charT)</tt> constructor. Just think how much simpler it would to get functions like the &ldquo;output&rdquo; form of
+	<tt>std::quoted</tt> correct and consistent if instead of manually writing all of the following overloads
+<code>template&lt;class charT&gt;
+T11 quoted(const charT* s, charT delim = charT(’"’), charT escape = charT(’\\’));
+template&lt;class charT, class traits, class Allocator&gt;
+T12 quoted(const basic_string&lt;charT, traits, Allocator&gt;&amp; s,
+charT delim = charT(’"’), charT escape = charT(’\\’));
+template&lt;class charT, class traits, class Allocator&gt;
+T14 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
+charT delim = charT(’"’), charT escape = charT(’\\’));</code>
+we only had to write the <tt>basic_string_view</tt> constructor
+<code>T14 quoted(basic_string&lt;charT, traits, Allocator&gt;&amp; s,
+charT delim = charT(’"’), charT escape = charT(’\\’));</code>
+	The additional boilerplate is error-prone and exists only because the language cannot make the obvious constructor
+	deduction, even though it can do so for any declarations that are not arguments.
+
+	
+<h3>Deduction guides for function templates</h3>
+<p>One very prominent way in which Constructor Template Argument Deduction differs from Function Template Argument Deduction
+is that Function Template Argument Deduction cannot be guided. Unsurprisingly, deduction guides are just as useful for
+Function Template Argument Deduction as Class Template Argument Deduction as shown by the examples below</p>
 <h4>Example: Unwrapping reference wrappers</h4>
 <p><tt>std::reference_wrapper</tt> is commonly used to effect pass-by-reference 
 to function templates with generic parameter types. Writing a function template
@@ -199,56 +256,30 @@ template&lt;typename F, typename R, typename ...T&lt; struct call_later_helper&l
 template&lt;typename F, typename ...T&gt;
 call_later(F fn, T &amp;&amp;...t) -> call_later_helper&lt;F, invocation_type_t&lt;F, T&amp;&amp;...&gt;&gt;::call_later;
 </code>
-<h2>Argument deduction for function templates</h2>
-For example, we believe the following code would be natural and useful
-<code>template &lt;typename T&gt; void f(optional&lt;T&gt;);
-template &lt;typename CharT, typename Traits&gt; void g(basic_string_view&lt;CharT, Traits&gt;);
-<span class="comment">/* ... */</span>
-f(7);     // Would like to deduce f&lt;int&gt; with arg of optional&lt;int&gt;
-g("foo"); // Would like to deduce g&lt;char, char_traits&lt;char&gt;&gt; with arg of string_view
-</code>
-Note that pending a consensus around terse notation for concepts, this paper does not propose allowing declarations of function templates without the <tt>template</tt> keyword. 
-<code>void f(optional); <span class="comment">// Not part of this proposal</span>
-<span class="comment">/* ... */</span>
-f(7); <span class="comment">// Does not deduce f&lt;int&gt;</span>
-</code>
+
 	
-	
-<h2>Return type deduction for functions</h2>
-We propose extending C++ return type deduction to allow Class Template Argument Deduction as code like the following appears both useful and natural to us.
-<code>tuple f() { return {3, 5}; } // tuple&lt;int, int&gt;</code>
-All return statements that deduce should deduce the same type, and at least one return statement should be able to deduce a return type.
+<h2>Help make terse notation a success</h2>	
+As described in the rationale above, terse notation works better in the presence of Class Template Argument Deduction in general.
+	However, the <b>Relaxed &ldquo;constraint <tt>auto</tt>&rdquo;</b> section of P1141R0 notes that the relationship is even closer
+	than that, proposing that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>. Indeed, the language is simplified
+	by consistently aligning CTAD to terse notation. Indeed, just as P1141R0 proposes the principle that &ldquo;wherever <tt>auto</tt> goes,
+	a <tt>Constraint auto</tt> can also (non-recursively) go&rdquo;, we think a <tt>ClassTemplateName auto</tt> can also go. Let us
+	look at the different cases.
+<h3>Allowing <tt>auto</tt> for declarations</h3>
+Just like P1141R0 says that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>, we should also allow
+	 <tt>tuple auto t = f();</tt> to behave like <tt>Constraint auto x = f();</tt>. This way the programmer can use or omit <tt>auto</tt>
+	consistently as a sigil for deduction consistently as they desire.
+<h3>Return type deduction for functions</h3>
+ to allow Class Template Argument Deduction as code like the following appears both useful and natural to us.
+<code>tuple auto f() { return {3, 5}; } // tuple&lt;int, int&gt;</code>
+As usual, all return statements should deduce the same type.
 <code>optional f() { return 7; }                                      <span class="comment">// optional&lt;int&gt;</span>
 auto g() -> optional { if(noValue()) return {} else return 7; } <span class="comment">// optional&lt;int&gt;</span>
 optional h() { if(foo()) return "bar" else return 7; }          <span class="comment">// Ill-formed: Ambiguous</span>
 </code>
 
-	
-
-<h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
-<b>Motivating examples: </b>
-    Comparators are often cited as a good use for lambdas and are commonly passed to std::sort.
-    However, in C++17 or earlier, it is hard to 
-    <code>set&lt;Building&gt; s([](int x, int y) { return x.height &lt; y.height; });</code>
-<p>In C++17, we deferred allowing CTAD to be applied in declarations with partially-specialized template argument lists out of concern that interactions with default arguments could create a breaking change. Consider the following example
-<code>template &lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
-template &lt;typename T, typename U = T> A&lt;T, U&gt; makeA(T t, U u = U{}) { return A(t,  u); }
-
-auto a1 = A&lt;int&gt;(2, 3.5); <span class="comment">// C++17: A&lt;int, int&gt;</span>
-auto a2 = makeA&lt;int&gt;(2, 3.5); <span class="comment">// A&lt;int, double&gt;</span>
-</code>	
-<p>To add support for partially-specialized template argument lists in declarations, we would have to decide what we want <tt>A&lt;int&gt;(2, 3.5)</tt> to deduce. The options are</p>
-<ol><li><tt>A&lt;int, int&gt;</tt> as it currently does.</li>
-	<li><tt>A&lt;int, double&gt;</tt> as a function template like <tt>makeA()</tt> does.</li>
-	<li>Make it ambiguous when options 1 and option 2 would give a different answer.</li></ol>
-<p>We can compare these approaches with some motivating examples (assuming the deduction guides like those in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0433r3.html">P0433R3</a>)</p>	
-<code>map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{});
-auto v = vector&lt;int&gt;(MyAlloc&lt;int&gt;{});</code>After considering examples such as the above, we propose adopting approach 2 for the following reasons.
-	<ul><li>In both of the motivating examples, approach 2 deduces correctly while 1 and 3 fail to compile.</li>
-	<li>We think approach 2 makes the language more consistent by giving deduction guides the same deduction rules as function templates while options 1 and 3 (as well as current C++17 behavior) create differences in how deduction guides and make functions handle partial specializations.</li>
-<li>In cases where both approach 1 and 2 compile, we think that any differences in legacy code have a high likelihood of being due to bugs. E.g., in the (admittedly artificial) <tt>struct A</tt> example, the user almost certainly expects <tt>a2</tt> to be <tt>A&lt;int, double&gt; </tt> else why would they be passing it 3.5?</li>
-<li>If the legacy C++17 behavior is desired for some class, that can still be achieved with a deduction guide. However, the opposite is not the case if deduction guides cannot be used in partially-specialized template argument lists in declarations.</li></ul>
-
-
-<h2>Appendix: Comparison of function templates and constructors of class templates</h2>
+<h3><tt>auto</tt> deduction for arguments</h3>
+If I write a text processing function, I would like to simply be able to say
+<code>void process_text(string_view auto x);</code>
+just like I would with any template concept.
 </body></html>
