@@ -49,7 +49,7 @@ h4 {
 }
 </style>
 
-<title>Extensions to Class Template Argument Deduction</title>
+<title>Filling holes in Class Template Argument Deduction</title>
 </head>
 
 <body>
@@ -63,9 +63,13 @@ Audience: Evolution Working Group
 This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>.
 <h2>Rationale</h2>
 As Timur Doumler has noted when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which always
-	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that deduction guides are not implicitly generated for aggregate templates, type aliases, or inherited constructors. We will show in this paper
-that these limitations can be safely removed.  In addition, as is explored in more depth in P????, if terse notation is adopted, having safe easy coding without requiring names for types becomes especially important. <p>The following
-    example illustrates both these points (constraint notation from
+	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, or inherited constructors or obey the normal rules for calling function templates.
+    We will show in this paper
+that these limitations can be safely removed. Note that most of these items were intentionally deferred to
+    C++17 with the intent of adding them in C++20. In addition, as is explored in more depth in P????, if terse notation is adopted in C++, it will greatly benefit from having safe easy coding that does not require names
+    for types. <p>The following
+    preview (don't worry, all will be explained below) gives a taste
+    for how much filling some small holes can smooth the road for some basic programming tasks (constraint notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>).
 <!-- 
 C++17 + P1141R0: 
@@ -166,16 +170,46 @@ Point p4 <span style='color:#808030; '>=</span> f<span style='color:#808030; '>(
 </pre></td>
     </table>
 
-We propose that deduction takes place from the arguments. Since it was voted in Rapperswil that aggregate
+We propose simply that deduction takes place from the arguments. Since it was voted in Rapperswil that aggregate
     initialization proceed as if there was a synthesized constructor (does this apply to designated initializers and list-initialization?), we simply propose that the synthesized constructors have associated implicit deduction guides the same as other constructors do.
 
 <h2>Class Template Argument Deduction for alias templates</h2>
-C++17 allows deduction for <tt>vector</tt> in cases such as
-<code>vector v = {1, 2, 3}; <span class="comment">// vector &lt;int&gt;</span></code>
-However, equally desirable code for <tt>pmr::vector</tt> fails because <tt>pmr::vector</tt> is an alias template and not a class template
-<code>pmr::vector v = {1, 2, 3}; <span class="comment">// Ill formed. pmr::vector is not a class template</span></code>
-
-<p>Furthermore, there is no way to perform CTAD for <tt>pmr::vector</tt> within C++17 language rules because alias templates cannot use CTAD. We believe that examples such as this motivate supporting CTAD for alias templates. We do note as a bikeshed that Class Template Argument Deduction is a misnomer for alias templates.</p>
+While Class Template Argument Deduction makes type inferencing easier when constructing classes,
+it doesn't work for type aliases, penalizing the use of type aliases and creating unnecessary inconsistency. We propose allowing Class Template Argument Deduction for type aliases. The following example illustrates
+how it makes <tt>pmr::vector</tt> as easy to deduce as <tt>vector</tt> (<tt>c</tt>:
+<table border="1"><tr><th><tt>vector</tt></th><th><tt>pmr::vector</tt> (C++17)</th><th>pmr::vector (proposed)</th></tr>
+<tr>
+    <td>
+<!-- 
+vector v = {1, 2, 3};
+vector v2(cont.begin(), cont.end());
+-->
+<pre style='color:#000000;background:#ffffff;'><span style='color:#603000; '>vector</span> v <span style='color:#808030; '>=</span> <span style='color:#800080; '>{</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
+<span style='color:#603000; '>vector</span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre>
+    </td>
+    <td>
+<!-- 
+pmr::vector<int> v({1, 2, 3}, mem_res);
+pmr::vector<decltype(cont)::value_type> v2(cont.begin(), cont.end(), mem_res);
+-->
+<pre style='color:#000000;background:#ffffff;'>pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#800080; '>></span> v<span style='color:#808030; '>({</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>},</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>decltype<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>)</span><span style='color:#800080; '>::</span>value_type<span style='color:#800080; '>></span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre>
+    </td>
+<td>
+ <!-- 
+pmr::vector v({1, 2, 3}, mem_res);
+pmr::vector v2(cont.begin(), cont.end(), mem_res);
+-->
+<pre style='color:#000000;background:#ffffff;'>pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span> v<span style='color:#808030; '>({</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>}</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre>
+</td>
+</tr></table>
+In the spirit of alias templates being simply an alias for the type, we do not propose
+allowing the programmer to write explicit deduction guides specifically for an alias
+template.
 	
 <h2>Deducing from inherited constructors</h2>
 Users may find it surprising that the following code is ill-formed.
