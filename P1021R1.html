@@ -102,8 +102,9 @@ void f(Curve auto c) {
   <span style='color:#696969; '>/* ... */</span>
 <span style='color:#800080; '>}</span>
 </pre></td></tr></table>
- Despite being more precise, we do not believe that the extra boilerplate in the &ldquo;Before&rdquo; contributes to making the
-    code clearer!
+ To see that this really falls under the category of filling holes, the above code would work in C++17
+if we just gave <tt>Point</tt> a two argument constructor corresponding to aggregate initialization
+and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
     
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as shown in the
