@@ -212,24 +212,54 @@ allowing the programmer to write explicit deduction guides specifically for an a
 template.
 	
 <h2>Deducing from inherited constructors</h2>
-Users may find it surprising that the following code is ill-formed.
-<code>template &lt;typename T&gt; struct A { A(T); };
-template &lt;typename T&gt; struct B : public A&lt;T&gt; { using A&lt;T&gt;::A; };
-A a{3}; <span class="comment">// Ill-formed. Inherited constructors do not implictly define deduction guides</span></code>
-This can make creating thin wrappers for classes (e.g., to just override a single method) cumbersome and error-prone, especially since the author of the derived class may need to manually replicate not only all the user-defined deduction guides of the base class but also all of the base class' implicitly-defined deduction guides as well. As a result, we propose that inheriting constructors from a base class also inherits their implicit and explicit deduction guides as well.<p>
-    Of course, this only applies in cases where the derived classes template arguments are determined from the base class' template arguments. For example,</p> <code>template&lt;typename T&gt; struct B { B(T t); <span class="comment">/* ... */</span>};
-template&lt;typename T, typename U&gt; struct D : B&lt;U&gt; {
-  using B&lt;U&gt;::B;
-  T t{};
+According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, we propose to avoid surprises that the deduction guides of the base class are likewise inherited. In out experience, users just expect this
+    to work:
+<table border="1"><tr><td colspan="2">
+<!--
+// Preferable to templatize on Invocable types because more general than function pointers
+template <typename T> struct Base requires Invocable<T> { 
+  Base(T);
+  virtual void someMethod();
 };
 
-B b{7}; <span class="comment">// B&lt;int&gt;</span>
-D d{7}; <span class="comment">// Ill-formed</span>
-D&lt;double&gt; d2{7}; <span class="comment">// D&lt;double, int&gt; by CTAD proposal for partially-specialized argument lists above</span></code>
-We suspect the feature will be useful and that counterexamples such as <tt>struct D</tt> will be the exception since inherited constructors also tend to require (admittedly with some differences) that the construction of the derived class be largely determined by the construction of the base class. Indeed, the counterexample above was constructed through the at least somewhat esoteric technique of combining inherited constructors with non-static data member initializers for members of dependent types.
-<p>Note that inheriting the constructors of a base class must include inheriting all the deduction guides, not just the implicit ones. As a number of standard library
+template <typename T> struct Derived : public Base<T> { 
+  using Base<T>::Base; 
+  virtual void SomeMethod() override; // Specialize some behavior
+};
+-->
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// Preferable to templatize on Invocable types because more general than function pointers</span>
+<span style='color:#800000; font-weight:bold; '>template</span> <span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>typename</span> T<span style='color:#800080; '>></span> <span style='color:#800000; font-weight:bold; '>struct</span> Base <span style='color:#800000; font-weight:bold; '>requires</span> Invocable<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span> <span style='color:#800080; '>{</span>
+  <span style='color:#800000; font-weight:bold; '>virtual</span> <span style='color:#800000; font-weight:bold; '>void</span> someMethod<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
+
+<span style='color:#800000; font-weight:bold; '>template</span> <span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>typename</span> T<span style='color:#800080; '>></span> <span style='color:#800000; font-weight:bold; '>struct</span> Derived <span style='color:#800080; '>:</span> <span style='color:#800000; font-weight:bold; '>public</span> Base<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span> <span style='color:#800080; '>{</span> 
+  <span style='color:#800000; font-weight:bold; '>using</span> Base<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span><span style='color:#800080; '>::</span>Base<span style='color:#800080; '>;</span> 
+  <span style='color:#800000; font-weight:bold; '>virtual</span> <span style='color:#800000; font-weight:bold; '>void</span> SomeMethod<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span> override<span style='color:#800080; '>;</span> <span style='color:#696969; '>// Specialize some behavior</span>
+<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
+</pre>
+    </td></tr>
+<tr><th>C++17</th> <th>Proposed</th></tr>
+<tr><td>
+<!--
+Base b([]() { /* ... */ }); // OK
+Derived d([]() { /* ... */ }); // Oops: Can't deduce from inherited constructor
+-->
+<pre style='color:#000000;background:#ffffff;'>Base b<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>({</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// OK</span>
+<s>Derived d<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#808030; '>){</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span></s> <span style='color:#696969; '>// Oops: Can't deduce from inherited constructor</span>
+</pre>
+    </td>
+<td>
+<!--
+Base b([]() { /* ... */ }); // OK
+Derived d([]() { /* ... */ }); // Now OK
+-->
+<pre style='color:#000000;background:#ffffff;'>Base b<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>({</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// OK</span>
+Derived d<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#808030; '>){</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// Now OK</span>
+</pre>
+    </td></tr></table>
+Note that inheriting the constructors of a base class must include inheriting all the deduction guides, not just the implicit ones. As a number of standard library
 writers use explicit guides to behave &ldquo;as-if&rdquo; their classes were defined as in the standard, such internal implementation details
-details would become visible if only the internal guides were inherited.</p>
+details would become visible if only the internal guides were inherited.
 
 <h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
 <b>Motivating examples: </b>
@@ -268,6 +298,4 @@ Again, the C++17 behavior of <tt>tuple&lt;int&gt;</tt> is incorrect, as such tem
 Function Template Argument Deduction behavior is a good choice here because it behaves like <tt>make_tuple&lt;int&gt;(1, 2.3)</tt> and deduces <tt>tuple&lt;int, double&gt;</tt>, satisfying the original goal for Class Template Argument Deduction of acting like make functions.</p>
 
 <h2>Wording</h2>
-<h2>Appendix</h2>
-Table of all changes, their complexity, and risk. The idea is that very simple ones may be accepted.
-</html>
+    </body></html>
