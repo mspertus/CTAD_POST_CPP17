@@ -264,19 +264,55 @@ writers use explicit guides to behave &ldquo;as-if&rdquo; their classes were def
 details would become visible if only the internal guides were inherited.
 
 <h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
-<b>Motivating examples: </b>
-    Comparators are often cited as a good use for lambdas and are commonly passed to std::sort.
-    However, in C++17 or earlier, as Nico Josuttis points out, lambda comparators fall on their face when creating associative containers.
-	Consider this example (motivated by P0553R2 and <a href="https://stackoverflow.com/questions/47859991/stdset-operations-with-custom-comparator">this example</a> from
-	Stack Overflow):
-    <code>set&lt;int, <span class="comment">???</span>&gt; s([](int i, int j) { return std::popcount(i) &lt; std::popcount(j); }); <span class="comment">// Uh oh, no name for lambda type</span>
-set s([](int i, int j) { return std::popcount(i) &lt; std::popcount(j); }); <span class="comment">// C++17 Class Template Argument Deduction doesn't work either</span></code>
-What we want of course is for Class Template Argument Deduction to work with a partially-specialized argument list just
-	like Function Template Argument Deduction does:
-<code>set&lt;int&gt; s([](int i, int j) { return std::popcount(i) &lt; std::popcount(j); }); <span class="comment">// Proposed</span></code>
-There are many other examples of partially specialized argument lists making coding simpler and less error-prone:
-<code>map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{}); <span class="comment">// Also helps for non-lambdas </span>
-priority_queue&lt;Task&gt; tasks([](Task a, Task b) { return a.priority &lt; b.priority; }); <span class="comment">// and more than just associative containers </span></code>
+    Partially-specialized template argument lists work in Function Template Argument Deduction
+    but surprisingly fail in Class Template Argument Deduction, a restriction we propose removing.
+    <table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
+<tr><td><!--
+using namespace ba = boost::algorithm;
+
+set<string, ba::ilexicographic_compare> case_insensitive_strings(ba::ilexicographic_compare);
+
+// Lambda comparators are great for algorithms like sort
+// Why can't we use them for associative containers?
+set<int, /* ???? */> s([](int i, int j) { return std::popcount(i) < std::popcount(j); }); 
+
+// Or container adaptors?
+priority_queue<Task, vector<Task>, /* ???? */> tasks([](Task a, Task b) { return a.priority < b.priority; }); 
+-->
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
+
+<span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>,</span> ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#800080; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+
+<span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
+<span style='color:#696969; '>// Why can't we use them for associative containers?</span>
+<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span> <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
+
+<span style='color:#696969; '>// Or container adaptors?</span>
+<span style='color:#603000; '>priority_queue</span><span style='color:#808030; '>&lt;</span>Task<span style='color:#808030; '>,</span> <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>> tasks(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span> <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre>
+    </td>
+<td><!--using namespace ba = boost::algorithm;
+
+set<string> case_insensitive_strings(ba::ilexicographic_compare);
+
+// Lambda comparators are great for algorithms like sort
+// Now with associative containers, too!
+set<int> s([](int i, int j) { return std::popcount(i) < std::popcount(j); }); 
+
+// and container adaptors!
+priority_queue<Task> tasks([](Task a, Task b) { return a.priority < b.priority; }); 
+-->
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
+
+<span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+
+<span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
+<span style='color:#696969; '>// Now with associative containers, too!</span>
+<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span> <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
+
+<span style='color:#696969; '>// And container adaptors!</span>
+<span style='color:#603000; '>priority_queue</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span> tasks<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span> <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre></td></tr></table>   
 
 <h3>Technical considerations</h3>
 <p>The usefulness of partially-specialized argument lists in Class Template Argument Deduction was recognized during the C++17 cycle, but was deferred out of concern that interactions with default arguments could create a breaking change. Consider the following example
