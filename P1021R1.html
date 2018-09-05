@@ -67,10 +67,11 @@ As Timur Doumler has noted when giving public presentations on using CTAD, he ha
     We will show in this paper
 that these limitations can be safely removed. Note that most of these items were intentionally deferred to
     C++17 with the intent of adding them in C++20. In addition, as is explored in more depth in P????, if terse notation is adopted in C++, it will greatly benefit from having safe easy coding that does not require names
-    for types. <p>The following
-    preview (don't worry, all will be explained below) gives a taste
-    for how much filling some small holes can smooth the road for some basic programming tasks (constraint notation from
-    <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>).
+    for types. <p>The following rough example gives an idea of how much filling holes can smooth the road. 
+    It also includes some notation from
+    <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
+    to illustrate how much terse constrants benefit from improved inferencing in Class Template
+    Argument Deduction, a theme examined in depth in P????. 
 <!-- 
 C++17 + P1141R0: 
 Proposed: 
@@ -212,7 +213,7 @@ allowing the programmer to write explicit deduction guides specifically for an a
 template.
 	
 <h2>Deducing from inherited constructors</h2>
-According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, we propose to avoid surprises that the deduction guides of the base class are likewise inherited. In out experience, users just expect this
+According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users just expect code like the following
     to work:
 <table border="1"><tr><td colspan="2">
 <!--
