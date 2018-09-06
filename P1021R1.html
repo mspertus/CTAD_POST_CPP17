@@ -274,21 +274,30 @@ set<string, ba::ilexicographic_compare> case_insensitive_strings(ba::ilexicograp
 
 // Lambda comparators are great for algorithms like sort
 // Why can't we use them for associative containers?
-set<int, /* ???? */> s([](int i, int j) { return std::popcount(i) < std::popcount(j); }); 
+set<int, /* ???? */> s([](int i, int j) { 
+                          return std::popcount(i) < std::popcount(j); 
+                     }); 
 
 // Or container adaptors?
-priority_queue<Task, vector<Task>, /* ???? */> tasks([](Task a, Task b) { return a.priority < b.priority; }); 
+priority_queue<Task, vector<Task>, /* ???? */> tasks([](Task a, Task b) {
+                                                     return a.priority < b.priority;
+                                                   }); 
 -->
+    
 <pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
 
 <span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>,</span> ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#800080; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
 
 <span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
 <span style='color:#696969; '>// Why can't we use them for associative containers?</span>
-<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span> <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
+<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span>
+                    <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; 
+                 }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
 
 <span style='color:#696969; '>// Or container adaptors?</span>
-<span style='color:#603000; '>priority_queue</span><span style='color:#808030; '>&lt;</span>Task<span style='color:#808030; '>,</span> <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>> tasks(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span> <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+<span style='color:#603000; '>priority_queue</span><span style='color:#808030; '>&lt;</span>Task<span style='color:#808030; '>,</span> <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>> tasks(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span>
+                                               <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; 
+                                             }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
 </pre>
     </td>
 <td><!--using namespace ba = boost::algorithm;
@@ -297,21 +306,28 @@ set<string> case_insensitive_strings(ba::ilexicographic_compare);
 
 // Lambda comparators are great for algorithms like sort
 // Now with associative containers, too!
-set<int> s([](int i, int j) { return std::popcount(i) < std::popcount(j); }); 
+set<int> s([](int i, int j) { 
+              return std::popcount(i) < std::popcount(j);
+            }); 
 
 // and container adaptors!
-priority_queue<Task> tasks([](Task a, Task b) { return a.priority < b.priority; }); 
--->
-<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
+priority_queue<Task> tasks([](Task a, Task b) { 
+                              return a.priority < b.priority;
+                         }); 
+--><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
 
 <span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
 
 <span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
 <span style='color:#696969; '>// Now with associative containers, too!</span>
-<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span> <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
+<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span>
+              <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; 
+            }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
 
 <span style='color:#696969; '>// And container adaptors!</span>
-<span style='color:#603000; '>priority_queue</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span> tasks<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span> <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+<span style='color:#603000; '>priority_queue</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span> tasks<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span>
+                              <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; 
+                            }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
 </pre></td></tr></table>   
 
 <h3>Technical considerations</h3>
