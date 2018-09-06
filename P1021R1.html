@@ -331,25 +331,29 @@ priority_queue<Task> tasks([](Task a, Task b) {
 </pre></td></tr></table>   
 
 <h3>Technical considerations</h3>
-<p>The usefulness of partially-specialized argument lists in Class Template Argument Deduction was recognized during the C++17 cycle, but was deferred out of concern that interactions with default arguments could create a breaking change. Consider the following example
-<code>template &lt;typename T, typename U = T&gt; struct A { A(T t, U u = U{}) {} };
-template &lt;typename T, typename U = T> A&lt;T, U&gt; makeA(T t, U u = U{}) { return A(t,  u); }
-
-auto a1 = A&lt;int&gt;(2, 3.5); <span class="comment">// C++17: A&lt;int, int&gt;</span>
-auto a2 = makeA&lt;int&gt;(2, 3.5); <span class="comment">// A&lt;int, double&gt;</span>
-</code>	
-
-Here are some examples with standard library classes, consider the following (assuming the deduction guides like those in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0433r3.html">P0433R3</a>)
-<code>map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{}); <span class="comment">// C++17: Deduces map&lt;string, int, less&lt;string&gt;&gt;</span>
-auto v = vector&lt;int&gt;(MyAlloc&lt;int&gt;{}); <span class="comment">// C++17: Deduces vector&lt;int, allocator&lt;int&gt;&gt;</span></code>
-Of course, the first thing that springs to mind when looking at those examples is that C++17 (and earlier) deduce the wrong things. If we could have had Class Template Argument Deduction from the beginning, we certainly would have it behave like Function Template Argument Deduction and correctly
-deduce <tt>map&lt;string, int, <span class="comment">lambda comparator</span>&gt;</tt> and <tt>vector&lt;int, MyAlloc&gt;</tt>.
+    The above discussion naturally begs the question as to why partially-specialized template
+    argument lists in Class Template Argument Discussion from the beginning. This feature
+    was deferred in C++17 out of concern that it could result in breaking changes when partially-specialized
+    template argument lists were combined with default arguments. Consider the expression
+    <pre>    <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#800080; '>></span><span style='color:#808030; '>(</span>MyAlloc<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span></pre>
+As far back as C++98, this creates a <tt>vector&lt;int, &lt;allocator&lt;int&gt;&gt;</tt>,
+    although it is unlikely to compile because <tt>MyAlloc</tt> almost certainly is not
+    convertible to <tt>allocator&lt;int&gt;</tt>. By contrast, ordinary function template
+    argument deduction would of course deduce <tt>vector&lt;int, MyAlloc&gt;</tt>.
+    While this is exactly what we would want in this situation and is likely
+    what we would have done if Class Template Argument Deduction was in C++ from the 
+    beginning, we would now have to contend with it being a breaking change.
 	<p>Fortunately, we can get the benefit of the usual Function Template Argument Deduction without breaking existing code by the following rule:
-If a class has no explicit deduction guides, C++17 behavior applies (acts like legacy C++ for classes that are not interested in CTAD). If it does have explicit guides, then do normal Function Template Argument Deduction. In particular, the above examples are handled correctly, and since any desired behavior can be specified, other examples can be handled as well.
+If a class has no explicit deduction guides, we propose that C++17 behavior applies where default template
+        arguments override type inference. Which maintains the behavior of legacy C++ for classes that 
+        were designed before Class Template Argument Deduction was introduced. If the class has explicit 
+        guides, then do normal Function Template Argument Deduction. In particular, the above examples are handled correctly, and since any desired behavior can be specified, other examples can be handled as well.
 </p>
 <p>One other technical issue discussed during C++17 was around variadic templates. In particular, what should <tt>tuple&lt;int&gt;(1, 2.3)</tt> deduce?
 Again, the C++17 behavior of <tt>tuple&lt;int&gt;</tt> is incorrect, as such templates have the wrong number of arguments. Fortunately, the normal
-Function Template Argument Deduction behavior is a good choice here because it behaves like <tt>make_tuple&lt;int&gt;(1, 2.3)</tt> and deduces <tt>tuple&lt;int, double&gt;</tt>, satisfying the original goal for Class Template Argument Deduction of acting like make functions.</p>
+Function Template Argument Deduction behavior is a good choice here because it correctly
+    deduces the same <tt>tuple&lt;int, double&gt;</tt> as <tt>make_tuple&lt;int&gt;(1, 2.3)</tt> 
+    does, and as Nico Josuttis has observed, it would be bizarre if they deduced anything different.</p>
 
 <h2>Wording</h2>
     </body></html>
