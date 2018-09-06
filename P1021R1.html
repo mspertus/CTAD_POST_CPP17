@@ -266,6 +266,9 @@ details would become visible if only the internal guides were inherited.
 <h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
     Partially-specialized template argument lists work in Function Template Argument Deduction
     but surprisingly fail in Class Template Argument Deduction, a restriction we propose removing.
+    Not only is this more consistent, but it has powerful applications that resolve longstanding
+    difficulties in C++, such as creating associative containers with lambda comparators, as the following 
+    example shows.
     <table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
 <tr><td><!--
 using namespace ba = boost::algorithm;
