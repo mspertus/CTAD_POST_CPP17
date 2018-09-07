@@ -1,54 +1,15 @@
 <!DOCTYPE html>
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <style>
-
-.comment { color: #999999; font-style: italic; }
-.pre { color: #000099; }
-.string { color: #009900; }
-.char { color: #009900; }
-.float { color: #996600; }
-.int { color: #999900; }
-.bool { color: #000000; font-weight: bold; }
-.type { color: #FF6633; }
-.flow { color: #FF0000; }
-.keyword { color: #990000; }
-.operator { color: #663300; font-weight: bold; }
-.operator { color: #663300; font-weight: bold; }
-pre.code {
-    border: 2px solid #666;
-    background-color: #F4F4F4;
-    padding-left: 10px;
-    padding-top: 0px;
-}
-code {
-    border: 2px solid #d0d0d0;
-    background-color: LightYellow;
-    padding: 2px;
-    padding-left: 10px;
-    display:table;
-    white-space:pre;
-    margin:2px;
-    margin-bottom:10px;
-}
-dt {
-    font-weight: bold;
-}
-.ins {
-    background-color:#A0FFA0;
-}
-.del {
-    background-color:#FFA0A0;
-    text-decoration:line-through
-}    
-h3 { 
-	margin-bottom: 0;
-}
-h4 { 
-	margin-bottom: 0;
-}
-</style>
-
+<link href="http://alexgorbatchev.com/pub/sh/current/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shCore.js" type="text/javascript"></script>
+<!--<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shAutoloader.js" type="text/javascript"></script>-->
+<script src='http://alexgorbatchev.com/pub/sh/current/scripts/shBrushCpp.js' type='text/javascript'></script>
+    <style>
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+    </style>
 <title>Extensions to Class Template Argument Deduction</title>
 </head>
 
@@ -59,7 +20,50 @@ Mike Spertus, Symantec<br>
 2018-05-07<br>
 Audience: Evolution Working Group
 </p>
-<h1>Extensions to Class Template Argument Deduction</h1>
+<h1>Improving function templates with Class Template Argument Deduction</h1>
+This paper proposes extending Function Template Argument Deduction to leverage
+Class Template Argument Deduction to enable benefits such as the following:
+<table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
+<tr><td>
+<pre class="brush:cpp gutter:false">
+// Example 1: Output version of std::quoted
+// Needs many overloads to get a basic_string view
+template&lt;class charT&gt;
+T11 quoted(const charT* s, charT delim = charT(’"’), charT escape = charT(’\\’));
+	
+template&lt;class charT, class traits, class Allocator&gt;
+T12 quoted(const basic_string&lt;charT, traits, Allocator&gt;&amp; s,
+           charT delim = charT(’"’), charT escape = charT(’\\’));
+	
+template&lt;class charT, class traits, class Allocator&gt;
+T14 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
+           charT delim = charT(’"’), charT escape = charT(’\\’));
+    
+// Example 2: Pass 'In' parameter by value or const &amp; by efficiency
+template &lt;typename T&gt; void do_f(T t); // Implements f
+
+template &lt;typename T&gt; inline void f(T &amp;&amp; t)
+{
+	do_f&lt;typename boost::call_traits&lt;decay_t&lt;T&gt;&gt;::type&gt;(t);
+}
+
+f(7);                   // Pass by-value
+f(vector {1, 2, 3, 4}); // Passed by const &amp;</pre></td>
+<td valign="top"><pre class="brush:cpp gutter:false">
+// Example 1: CTAD deduces arguments to basic_string_view as in ordinary declarations
+template&lt;class charT, class traits, class Allocator&gt;
+T14 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
+    charT delim = charT(’"’), charT escape = charT(’\\’));
+
+// Example 2: Specify with Deduction Guide for Function Templates
+template &lt;typename T&gt; void f(T t); // Implement here. No need to delegate
+template &lt;typename T&gt; f(T t) -> f&lt;typename boost::call_traits&lt;T&gt;::type&gt;;
+
+f(7);                   // Pass by-value
+f(vector {1, 2, 3, 4}); // Passed by const &amp;</pre></td>
+</pre></td>
+</tr>
+</table>
 This paper proposes several recommended extensions to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>
     Give the point example from P0329R0
 <h2>Rationale</h2>
@@ -76,11 +80,11 @@ that these limitations can be safely removed.
 Template Argument Deduction for Constructors in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3405.html#deduction">n3405</a>, it has
 unnecessary restrictions that can keep them from being used in place of make functions. In particular,
 they cannot be used with partially-specialized template argument lists:
-<code>auto t = make_tuple&lt;int&gt;('a', []() { <span class="comment">/* ... */</span>}); <span class="comment">// OK</span>
-auto t = tuple&lt;int&gt;('a', []() { <span class="comment">/* ... */</span>}); <span class="comment">// Ill-formed!</span>
+<pre><code class="prettyprint">auto t = make_tuple&lt;int&gt;('a', []() { /* ... */}); // OK
+auto t = tuple&lt;int&gt;('a', []() { /* ... */); // Ill-formed!
 
-<span class="comment">// Doesn't just apply to artificial examples</span>
-map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{}); <span class="comment">// Ill-formed :(</span></code>
+// Doesn't just apply to artificial examples
+map&lt;string, int&gt; caseInsensitiveWordCounts(boost::algorithm::ilexicographic_compare{}); // Ill-formed :(</code></pre>
 
 <p>We also discuss several other useful ways to make Class Template Argument Deduction like Function Template Argument Deduction</p>
 <h3>Help make terse notation a success</h3>
@@ -311,8 +315,9 @@ If I write a text processing function, I would like to simply be able to say
 <code>void process_text(string_view auto x);</code>
 just like I would with any template concept. As already noted in the discussion of <tt>std::quoted</tt> above, this would
 also properly accept strings and character pointers of all types.
-</body>
 <h2>Wording</h2>
-<h2>Appendix</h2>
-Table of all changes, their complexity, and risk. The idea is that very simple ones may be accepted.
+<script type="text/javascript">
+     SyntaxHighlighter.all()
+</script>
+</body>
 </html>
