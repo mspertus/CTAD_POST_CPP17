@@ -28,7 +28,7 @@ Audience: Evolution Working Group
 <h1>Improving function templates with Class Template Argument Deduction</h1>
 This paper proposes  
 
-<ul><li>Allowing Function Templates to consider Class Template Argument Deduction
+	<ul><li>Allowing Function Templates to consider Class Template Argument Deduction
 during Function Template Argument Deduction.</li>
 <li>Allowing deduction guides for Function Templates</li>
 </ul>
@@ -129,96 +129,61 @@ template&lt;class T&gt; void f(optional&lt;T&gt;); </pre></td></tr>
 </tr></table>
 <h3>Wording</h3>
 <h2>Deduction guides for function templates</h2>
-<p>One very prominent way in which Constructor Template Argument Deduction differs from Function Template Argument Deduction
-is that Function Template Argument Deduction cannot be guided. Unsurprisingly, deduction guides are just as useful for
-Function Template Argument Deduction as Class Template Argument Deduction as shown by the examples below</p>
-<h4>Example: Unwrapping reference wrappers</h4>
-<p><tt>std::reference_wrapper</tt> is commonly used to effect pass-by-reference 
-to function templates with generic parameter types. Writing a function template
-that can be used this way is naturally simplified with deduction guides.</p>
-<code>template &lt;typename T&gt; void f(T t) { t.foo(); <span class="comment">/* ... */</span>}
-template &lt;typename T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;</code>
-Now <tt>f</tt> will unwrap reference wrappers arguments.
-<code>struct X { void foo(); <span class="comment">/* ... */</span>};
-int main()
-{
-	X x;
-	f(ref(x)); <span class="comment">// Passes by reference as desired. Ill-formed without deduction guide</span>
-}
-</code>
-<p><b>Note:</b> In C++ 17, something similar may be accomplished by rewriting <tt>f</tt> as
-<code>// Helper for converting reference wrappers to references
+<p>While Class Template Argument Deduction uses both implicit and explicit deduction guides, 
+Function Template Argument Deduction in effect uses only implicit guides (ordinary Function
+Template Argument deduction). Given that it often proves helpful to override the implicit deduction 
+behavior of class templates, would the same be true for function templates? The answer is a resounding “yes”.</p>
+
+	<p><tt>std::reference_wrapper</tt> is commonly used to effect pass-by-reference 
+to function templates with generic parameter types, but this is rarely used outside
+the standard library we believe due to the ugliness of forcing the correct deduction.
+If, as we propose, deduction guides could be provided for implicit guides, unwrapping
+would be straightforward, both inside the standard library and in user code:</p>
+<table border="1"><tr><th>C++17</th><th>Proposed</th></tr><tr><td>
+<pre class="brush:cpp">// Helper for converting reference wrappers to references
 template &lt;typename T&gt; struct unwrap { using type = T };
 template &lt;typename T&gt; struct unwrap&lt;std::reference_wrapper&lt;T&gt;&gt; { using type = T &amp; }
 template &lt;typename T&gt; using unwrap_t = typename unwrap&lt;T&gt;::type;
 
-template &lt;typename T&gt; void f(T t) 
+
+template&lt;typename T&gt; void f_impl(T t);
+
+// We want f to take its argument by value or ref based
+// whether or not it is a reference_wrapper
+template &lt;typename T&gt; void f(T &amp;&amp;t) 
 {
-	remove_reference_t&lt;unwrap_t&lt;T&gt;&gt; &amp;actualT{t};
-	actualT.foo(); <span class="comment">/* ... */</span> 
-}</code>
-However, not only is this more cumbersome in our opinion, it requires that the user of <tt>f</tt> look inside the implementation of <tt>f</tt> to understand
-that it conforms to the &ldquo;<tt>reference_wrapper</tt> mini-language&rdquo;, whereas the proposed version
-advertises that in the interface.</p>
-<h4>Example: Efficient parameter passing</h4>
-<p>For function templates that accept a <tt>const</tt> argument, it is generally most efficient to pass
+	f_impl&lt;unwrap_t&lt;T&gt;&gt;(t);
+}</pre></td>
+<td valign="top"><pre class="brush:cpp">// Unwrap reference_wrapper with deduction guide
+template &lt;typename T&gt; void f(T t);</span>
+template &lt;typename T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;</pre></td></tr></table>
+Not only does the deduction guide make the code much simpler, it moves the unwrapping
+of the <tt>reference_wrapper</tt> from being hidden inside the body of <tt>f</tt> to being
+advertised in <tt>f</tt>'s interface. In real life, this is often even hidden more deeply as
+many implementation of, say, <tt>for_each</tt> do not unwrap reference wrappers until they
+actually invoke the callable.
+
+<p>As another example, for function templates that accept am &ldquo;in&rdquo; argument, it is common to want to accept
 small argument types, such as <tt>int</tt>, by value and large or uncopyable types by <tt>const &amp;</tt>.
-The Boost Call Traits library has a <tt>call_traits&lt;T&gt;::param_type</tt> traits that gives the
-most efficient way to pass, but it is awkward to to use. 
-<code>// C++17
-template &lt;typename T&gt; void do_f(T t); <span class="comment">// Implements f</span>
+Unfortunately, this is rarely done as the implicitly-generated rules for Function Template Argument
+Deduction do not readily provide the desired behavior. With deduction guides, this again naturally simplifies
+	to a form that no longer requires examining the body of <tt>f</tt> to understand how arguments are  passed:
+<table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
+<tr><td><pre class="brush:cpp">template &lt;typename T&gt; 
+void f_impl(T t);
 
 template &lt;typename T&gt; inline void f(T &amp;&amp; t)
 {
 	do_f&lt;typename boost::call_traits&lt;decay_t&lt;T&gt;&gt;::type&gt;(t);
-}</code>
-With deduction guides, this again naturally simplifies to a form that no longer requires examining the body of <tt>f</tt>
-<code>template &lt;typename T&gt; void f(T t); <span class="comment">// Implement here. No need to delegate</span>
-template &lt;typename T&gt; f(T t) -> f&lt;typename boost::call_traits&lt;T&gt;::type&gt;;</code>
-
-<h4>Example: Delayed forwarding</h4>
-The following example, due to Richard Smith, applies function deduction guides to delayed forwarding in order to convert to the callee's types in the caller. E.g., to eliminate the need to use <tt>std::ref</tt> if the callee expects a reference (this has been known to <a href="https://stackoverflow.com/questions/18359864/passing-ents-to-stdasync-by-reference-fails">bite</a> users of <tt>async</tt> as well as of <tt>thread</tt>'s constructor template).
-<code><span class="comment">// Assume p0945r0 and std::experimental::invocation_type</span>
-template&lt;typename F, typename R, typename ...T&gt;
-future&lt;R&gt; call_later(F fn, T ...t);
-
-template&lt;typename F, typename T&gt; struct call_later_helper;
-template&lt;typename F, typename R, typename ...T&lt; struct call_later_helper&lt;R(T...)&gt; {
-  using call_later = ::call_later&lt;F, R, T...&gt;;
-};
-
-template&lt;typename F, typename ...T&gt;
-call_later(F fn, T &amp;&amp;...t) -> call_later_helper&lt;F, invocation_type_t&lt;F, T&amp;&amp;...&gt;&gt;::call_later;
-</code>
-
-	
-<h2>Aligning with terse notation</h2>	
-As described in the rationale above, terse notation already works better in the presence of Class Template Argument Deduction in general.
-	However, the <b>Relaxed &ldquo;constraint <tt>auto</tt>&rdquo;</b> section of P1141R0 notes that the relationship is even closer
-	than that, proposing that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>. Indeed, the language is simplified
-	by consistently aligning CTAD to terse notation. Just as P1141R0 proposes the principle that &ldquo;wherever <tt>auto</tt> goes,
-	a <tt>Constraint auto</tt> can also (non-recursively) go&rdquo;, we think a <tt>ClassTemplateName auto</tt> can also go. In particular,
-	we believe there is no reason to have different rules for where <tt>auto</tt> can be used to indicate type inference. Let us
-	look at the different cases.
-<h3>Allowing <tt>auto</tt> for declarations</h3>
-Just like P1141R0 says that <tt>Constraint x = f();</tt> should behave like <tt>tuple t = f();</tt>, we should also allow
-	 <tt>tuple auto t = f();</tt> to behave like <tt>Constraint auto x = f();</tt>. This way the programmer can use or omit <tt>auto</tt>
-	consistently as a sigil for deduction consistently as they desire.
-<h3>Return type deduction for functions</h3>
- to allow Class Template Argument Deduction as code like the following appears both useful and natural to us.
-<code>tuple auto f() { return {3, 5}; } // tuple&lt;int, int&gt;</code>
-As usual, all return statements should deduce the same type.
-<code>optional f() { return 7; }                                      <span class="comment">// optional&lt;int&gt;</span>
-auto g() -> optional { if(noValue()) return {} else return 7; } <span class="comment">// optional&lt;int&gt;</span>
-optional h() { if(foo()) return "bar" else return 7; }          <span class="comment">// Ill-formed: Ambiguous</span>
-</code>
-
-<h3><tt>auto</tt> deduction for arguments</h3>
-If I write a text processing function, I would like to simply be able to say
-<code>void process_text(string_view auto x);</code>
-just like I would with any template concept. As already noted in the discussion of <tt>std::quoted</tt> above, this would
-also properly accept strings and character pointers of all types.
-<h2>Wording</h2>
+}</pre></td>
+<td valign="top"><pre class="brush:cpp">template &lt;typename T&gt; void f(T t);
+template &lt;typename T&gt; f(T t) -> f&lt;typename boost::call_traits&lt;T&gt;::type&gt;;</pre></td></tr></table>
+<b>Note: </b>Earlier versions of this paper proposed allowing deduction guides
+to optionally specify which of an overloaded function template they were guiding. We defer this
+both due to complexity and the absence of compelling use cases. This can
+always be added later if it proves worthwhile. Indeed, class template constructors
+also form an overload set, and such a feature has not proved necessary for Class Template Argument Deduction.
+<h3>Wording</h3>
 <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
