@@ -155,7 +155,7 @@ template &lt;typename T&gt; void f(T &amp;&amp;t)
 	f_impl&lt;unwrap_t&lt;T&gt;&gt;(t);
 }</pre></td>
 <td valign="top"><pre class="brush:cpp">// Unwrap reference_wrapper with deduction guide
-template &lt;typename T&gt; void f(T t);</span>
+template &lt;typename T&gt; void f(T t);
 template &lt;typename T&gt; f(reference_wrapper&lt;T&gt;) -&gt; f&lt;T &amp;&gt;;</pre></td></tr></table>
 Not only does the deduction guide make the code much simpler, it moves the unwrapping
 of the <tt>reference_wrapper</tt> from being hidden inside the body of <tt>f</tt> to being
