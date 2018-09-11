@@ -32,7 +32,7 @@ programming&rdquo;. This paper discusses how Class Template Argument
 Deduction can help make the release of terse notation as successful as
 possible by providing inferenced creation of constrained objects
 just as concepts provide inferenced usage of constrained objects
-as illustrated by the following example.
+as illustrated by the following example (note that <tt>Curve</tt> is a concept).
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
 <tr><td>
 <pre class="brush:cpp">auto f(Curve auto &amp;c)
@@ -70,9 +70,55 @@ had been an ordinary <tt>vector</tt>), the example above
 was crafted to illustrate the value of potential improvements
 to Class Template Argument Deduction, such as return type
 deduction below, and aggregate and type alias deduction from P1021R1.
+<h2>The proposal</h2>
+Our proposal is simply that wherever P1141R0 allows a Concept-constrained
+<tt>auto</tt>, a class template can be used as well with the same
+	rules for independent resolution and forwarding references. Let
+	us look at some examples.
+<h3>Ordinary declarations</h3>
+In P1141R0, it is mentioned that in
+<blockquote><pre class="brush:cpp">Constraint auto f1();</pre></blockquote>
+it should be possible to omit the <tt>auto</tt> to get
+<blockquote><pre class="brush:cpp">Constraint f1();</pre></blockquote>
+As justification, P1141R0 specifically refers to Class Template Argument Deduction allowing
+
+<blockquote><pre class="brush:cpp">std::tuple x = foo();</pre></blockquote>
+By the same reasoning, it makes sense for us to be consistent in the other
+direction and allow
+
+<blockquote><pre class="brush:cpp">std::tuple auto x = foo();</pre></blockquote>
+Otherwise, the programmer has to remember a bunch of special-cased
+rules as to which kinds of declarations can accept an <tt>auto</tt>
+or not.
+<h3>Return type deduction</h3>
+Likewise, just like one can say
+<blockquote><pre class="brush:cpp">Constraint auto f1();</pre></blockquote>
+one should also be able to say
+<blockquote><pre class="brush:cpp">tuple auto f1();</pre></blockquote>
+to make explicit that constrained type deduction is taking place (In
+	this context, we are using the phrase &ldquo;constrained type
+	deduction&rdquo; to refer to the fact that the deduced type
+	is given more specifically than just a lone <tt>auto</tt>).
+	The example given on top of the table illustrates how this
+	can vastly simplify code.
+<h3>Argument deduction</h3>
+As P1141R0 allows us to say
+<blockquote><pre class="brush:cpp">void auto f1(Constraint auto x);</pre></blockquote>
+one should also be able to indicate that a declaration has its arguments
+	deduced by
+	<blockquote><pre class="brush:cpp">void auto f1(tuple auto x);</pre></blockquote>
+
+This is not only more consistent, but it can help avoid
+the need to write function templates where some arguments are dependent as
+class templates and other arguments are dependent as concepts. The following
+example shows how beneficial that can be (as well as being a
+	good illustration of the value of the proposal for partially-specialized
+	template argument lists in P1021R0)
+extension
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
 <tr><td>
-<pre class="brush:cpp">template&lt;class CharT, class Traits&gt;
+<pre class="brush:cpp">// We need an explicit template here because of both class template and concept arguments
+template&lt;class CharT, class Traits&gt;
 auto f(Curve auto &amp;c, basic_ostream&lt;charT, Traits&gt; logger)
   -&gt; pair&lt;decltype(c), pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt;&gt;
 {
@@ -82,14 +128,16 @@ auto f(Curve auto &amp;c, basic_ostream&lt;charT, Traits&gt; logger)
   
   pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt; cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);
   logger &lt;&lt; "Got control points: ";
-  copy(cp.begin(), cp.end(),
+  // Hard to specify ostream_iterator template args
+  copy(cp.begin(), cp.end(), 
        ostream_iterator&lt;decltype(cp[0]),
 	                    typename decltype(logger)::char_type,
 	                    typename decltype(logger)::traits_type&gt;(logger, ", "));
   return {c, cp };
 };</pre></td>
 <td valign="top">
-<pre class="brush:cpp">pair auto f(Curve auto &amp;c, basic_ostream auto logger)
+<pre class="brush:cpp">// &ldquo;auto&rdquo; constraints consistently indicate which arguments are deduced
+pair auto f(Curve auto &amp;c, basic_ostream auto logger)
 {
   Point auto top_left{c.x_min(), c.y_max()};
   screen->line(top_left, {c.x_min(), c.y_max()});
@@ -97,18 +145,19 @@ auto f(Curve auto &amp;c, basic_ostream&lt;charT, Traits&gt; logger)
 
   pmr::vector cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);
   logger &lt;&lt; "Got control points: ";
-  copy(cp.begin(), cp.end(),
+  // See P1021R0 for partially-specializing ostream_iterator
+  copy(cp.begin(), cp.end(), 
        ostream_iterator&lt;decltype(cp[0])&gt;(logger, ", "));
   return {c, cp};
 };</pre></td>
 </tr></table>
 <h2>Wording</h2>
-<h2>Futures</h2>
+<!-- <h2>Futures</h2>
 <h3><tt>auto</tt> for base classes</h3>
 <h3>Deduction guides for concepts</h3>
 	While it was pointed out above that during object creation an
 actual type, rather than just its requirements, needs to be
-provided, that need not be true.
+provided, that need not be true. -->
 
 <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
