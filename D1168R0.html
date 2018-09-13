@@ -15,7 +15,7 @@ body .syntaxhighlighter .line {
 }
 
     </style>
-<title>Why Class Template Argument Deduction will make Terse Notation better</title>
+<title>Why Class Template Argument Deduction makes Terse Notation better</title>
 </head>
 
 <body>
@@ -25,7 +25,7 @@ Mike Spertus, Symantec<br>
 2018-??-??<br>
 Audience: Evolution Working Group
 </p>
-<h1>Why Class Template Argument Deduction will make Terse Notation better</h1>
+<h1>Why Class Template Argument Deduction makes Terse Notation better</h1>
 Terse concept notation along the lines of <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a> has
 the potential to powerfully make generic programming look more like &ldquo;regular
 programming&rdquo;. This paper discusses how Class Template Argument
@@ -73,8 +73,10 @@ deduction below, and aggregate and type alias deduction from P1021R1.
 <h2>The proposal</h2>
 Our proposal is simply that wherever P1141R0 allows a Concept-constrained
 <tt>auto</tt>, a class template can be used as well with the same
-	rules for independent resolution and forwarding references. Let
-	us look at some examples.
+	rules for independent resolution and forwarding references. (Of course, 
+	if a different approach from P1141 is adopted for constrained declarations,
+	this proposal should follow that). 
+	<p>Let	us look at some particular cases.</p>
 <h3>Ordinary declarations</h3>
 In P1141R0, it is mentioned that in
 <blockquote><pre class="brush:cpp">Constraint auto f1();</pre></blockquote>
@@ -88,7 +90,7 @@ direction and allow
 
 <blockquote><pre class="brush:cpp">std::tuple auto x = foo();</pre></blockquote>
 Otherwise, the programmer has to remember a bunch of special-cased
-rules as to which kinds of declarations can accept an <tt>auto</tt>
+rules as to which kinds of deduced declarations can accept an <tt>auto</tt>
 or not.
 <h3>Return type deduction</h3>
 Likewise, just like one can say
@@ -99,20 +101,33 @@ to make explicit that constrained type deduction is taking place (In
 	this context, we are using the phrase &ldquo;constrained type
 	deduction&rdquo; to refer to the fact that the deduced type
 	is given more specifically than just a lone <tt>auto</tt>).
-	The example given on top of the table illustrates how this
-	can vastly simplify code.
+	The example given at the top of this paper of <tt>f</tt>
+	returning
+	<blockquote><pre class="brush:cpp">pair auto</pre></blockquote>
+instead of
+	<blockquote><pre class="brush:cpp">pair&lt;decltype(c), pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt;&gt;</pre></blockquote>
+
+	illustrates just how much this can simplify code.
+<p>Notes:</p>
+	<ul><li>As with normal return type deduction, the function needs to have 
+		a <tt>return</tt> statement, and all <tt>return</tt> statements must 
+		generate the same type. In P1021R0, it was proposed that the <tt>return</tt> statements could have different types, but
+		this is  no longer proposed after feedback from compiler vendors.</li>
+		<li>This proposal also follows the principal that returning a value should behave like initialization:
+		<blockquote><pre class="brush:cpp">tuple t = {1, "foo"};
+tuple auto g() { return {1, "foo"}; }</pre></blockquote></li></ul>
 <h3>Argument deduction</h3>
 As P1141R0 allows us to say
-<blockquote><pre class="brush:cpp">void auto f1(Constraint auto x);</pre></blockquote>
+<blockquote><pre class="brush:cpp">void f1(Constraint auto x);</pre></blockquote>
 one should also be able to indicate that a declaration has its arguments
 	deduced by
-	<blockquote><pre class="brush:cpp">void auto f1(tuple auto x);</pre></blockquote>
+	<blockquote><pre class="brush:cpp">void f1(tuple auto x);</pre></blockquote>
 
 This is not only more consistent, but it can help avoid
 the need to write function templates where some arguments are dependent as
 class templates and other arguments are dependent as concepts. The following
-example shows how beneficial that can be (as well as being a
-	good illustration of the value of the proposal for partially-specialized
+example shows how beneficial that can be (and also illustrates
+	the value of the proposal for partially-specialized
 	template argument lists in P1021R0)
 extension
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
@@ -151,13 +166,18 @@ pair auto f(Curve auto &amp;c, basic_ostream auto logger)
   return {c, cp};
 };</pre></td>
 </tr></table>
-<h2>Wording</h2>
+<h3>Specialization</h3>
+As Zhihao Yuan notes, the partially-specialized template argument list support proposed in
+D1021R1 naturally supports the useful alignment
+<blockquote><pre class="brush:cpp">tuple&lt;Copyable&gt; t(1);</pre></blockquote>
 <!-- <h2>Futures</h2>
-<h3><tt>auto</tt> for base classes</h3>
+The proposals in this paper not only immediately increase consistency, but
+	they fit nicely with possible future evolution
+<h3>Concept base-class flexibility</h3>
 <h3>Deduction guides for concepts</h3>
 	While it was pointed out above that during object creation an
 actual type, rather than just its requirements, needs to be
-provided, that need not be true. -->
+provided, that need not be true.-->
 
 <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;

@@ -56,7 +56,9 @@ h4 {
 <p>P1021R1<br>
 Mike Spertus, Symantec<br>
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
-2018-05-07<br>
+Timur Doumler<br>
+<a href="mailto:papers@timur.audio">papers@timur.audio</a><br>
+2018-??-??<br>
 Audience: Evolution Working Group
 </p>
 <h1>Filling holes in Class Template Argument Deduction</h1>
@@ -87,7 +89,7 @@ void f(Curve auto c) {
   /* ... */
 } -->
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
-<tr><td><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
+<tr><td><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>;</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
 
 <span style='color:#800000; font-weight:bold; '>void</span> f<span style='color:#808030; '>(</span>Curve <span style='color:#800000; font-weight:bold; '>auto</span> c<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
   Point<span style='color:#808030; '>&lt;</span>decltype<span style='color:#808030; '>(</span>c<span style='color:#808030; '>.</span>x_min<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span> top_left<span style='color:#800080; '>{</span>c<span style='color:#808030; '>.</span>x_min<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> c<span style='color:#808030; '>.</span>y_max<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
@@ -107,8 +109,10 @@ if we just gave <tt>Point</tt> a two argument constructor corresponding to aggre
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
     
 <h2>Class Template Argument Deduction for aggregates</h2>
-We propose that Class Template Argument Deduction works for aggregate initialization as shown in the
-    following example, where <tt>v</tt> is a vector of points and <tt>f()</tt> returns a vector of points:
+We propose that Class Template Argument Deduction works for aggregate initialization as one
+	shouldn't have to choose between having aggregates and deduction. This is well illustrated
+	by the following example, where <tt>v</tt> is a vector of (some specialization of) <tt>Point</tt> 
+	and <tt>f()</tt> returns a vector of (some specialization of) <tt>Point</tt>:
 <table border="1"><tr><th>C++17</th><th>C++17 attempted workaround</th><th>Proposed</th></tr>
 <td><!--
 // Point is aggregate, as intended
@@ -134,17 +138,17 @@ Point<span style='color:#808030; '>&lt;</span><span style='color:#ffffff; backgr
 </td>    
 <td><!--// Workaround attempt: Try to emulate aggregate behavior through extra work
 template<class T> 
-struct Point { Point(T const &x, T T const &y): x{x}, y{y} {} T x; T y};
+struct Point { Point(T const &x, T const &y): x{x}, y{y} {} T x; T y};
 
-// Can deduce, but no longer an aggregate, unintentionally changing is_aggregate and more
+// Can deduce, but extra work, changed is_aggregate, and broke designated initializers
 Point p{3.0, 4.0};
 Point p2 {.x = 3.0, .y = 4.0}; // Ill-formed - not aggregate
 Point p3 = v[0];
 Point p4 = f()[0];--><pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// Workaround attempt: Try to emulate aggregate behavior through extra work</span>
 <span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> 
-<span style='color:#800000; font-weight:bold; '>struct</span> Point <span style='color:#800080; '>{</span> Point<span style='color:#808030; '>(</span>T <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#808030; '>&amp;</span>x<span style='color:#808030; '>,</span> T T <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#808030; '>&amp;</span>y<span style='color:#808030; '>)</span><span style='color:#800080; '>:</span> x<span style='color:#800080; '>{</span>x<span style='color:#800080; '>}</span><span style='color:#808030; '>,</span> y<span style='color:#800080; '>{</span>y<span style='color:#800080; '>}</span> <span style='color:#800080; '>{</span><span style='color:#800080; '>}</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
+<span style='color:#800000; font-weight:bold; '>struct</span> Point <span style='color:#800080; '>{</span> Point<span style='color:#808030; '>(</span>T <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#808030; '>&amp;</span>x<span style='color:#808030; '>,</span> T <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#808030; '>&amp;</span>y<span style='color:#808030; '>)</span><span style='color:#800080; '>:</span> x<span style='color:#800080; '>{</span>x<span style='color:#800080; '>}</span><span style='color:#808030; '>,</span> y<span style='color:#800080; '>{</span>y<span style='color:#800080; '>}</span> <span style='color:#800080; '>{</span><span style='color:#800080; '>}</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
 
-<span style='color:#696969; '>// Can deduce, but inadvertently changed is_aggregate and more</span>
+<span style='color:#696969; '>// Can deduce, but extra work, changed is_aggregate, and no designated initializers</span>
 Point p<span style='color:#800080; '>{</span><span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
 <s>Point p2 <span style='color:#800080; '>{</span><span style='color:#808030; '>.</span>x <span style='color:#808030; '>=</span> <span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>.</span>y <span style='color:#808030; '>=</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span></s> <span style='color:#696969; '>// Ill-formed - not aggregate</span>
 Point p3 <span style='color:#808030; '>=</span> v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
@@ -172,7 +176,7 @@ Point p4 <span style='color:#808030; '>=</span> f<span style='color:#808030; '>(
 </pre></td>
     </table>
 
-We propose simply that deduction takes place from the arguments. Since it was voted in Rapperswil that aggregate
+In other words, deduction should take place simply from the arguments. Since it was voted in Rapperswil that aggregate
     initialization proceed as if there was a synthesized constructor (does this apply to designated initializers and list-initialization?), we simply propose that the synthesized constructors have associated implicit deduction guides the same as other constructors do.
 
 <h2>Class Template Argument Deduction for alias templates</h2>
