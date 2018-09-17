@@ -30,8 +30,6 @@ Terse concept notation along the lines of <a href="http://www.open-std.org/jtc1/
 the potential to powerfully make generic programming look more like &ldquo;regular
 programming&rdquo;. This paper discusses how Class Template Argument
 Deduction can help make the release of terse notation as successful as
-possible by providing inferenced creation of constrained objects
-just as concepts provide inferenced usage of constrained objects
 as illustrated by the following example (note that <tt>Curve</tt> is a concept).
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
 <tr><td>
@@ -52,30 +50,34 @@ as illustrated by the following example (note that <tt>Curve</tt> is a concept).
   return {c, cp};
 };</pre></td>
 </tr></table>
-What is going on here? Terse notation has many benefits because it
-allows us to prefer interface/behavior over implementation when
-using objects, with all the well-known benefits associated thereto.
-This is a very good thing, but, like everything, has a few tradeoffs.
-In particular, it is more common to have named objects without
-named types. The main use of course for concrete types is for object
-creation, where an actual type, rather than just the requirements it
-satisfies, needs to be specified somehow. Class Template Argument Deduction 
-is a way to create new objects from existing objects where the new
-type is inferred, rather than needing to be explicitly stated, which
-is just what the doctor ordered for flexible and robust code in examples
-such as the above.
+What is going on here? Since function template arguments in
+terse notation often do not have named types, the easier
+it is to create new objects from existing objects without
+having to explicitly refer to their types, the more natural code
+will be. Since Class Template Argument Deduction
+provides inferenced creation of constrained objects
+just as concepts provide inferenced usage of constrained objects
+(thereby addressing complementary problems), it can really
+help in such situations as the above example shows.
+
 <p>While C++17 Class Template Argument Deduction can often be
 used in such situations (e.g., if the <tt>pmr::vector</tt> above
 had been an ordinary <tt>vector</tt>), the example above
 was crafted to illustrate the value of potential improvements
 to Class Template Argument Deduction, such as return type
-deduction below, and aggregate and type alias deduction from P1021R1.
+deduction below, and aggregate and type alias deduction. Such
+basic "filling of holes" would help a lot as illustrated in the
+example, and is covered in D1021R1 and D1168R0. The remainder
+of this paper focuses specifically on aligning Class Template
+Argument Deduction Inferencing with Constrained Type Inferencing.
+
 <h2>The proposal</h2>
 Our proposal is simply that wherever P1141R0 allows a Concept-constrained
 <tt>auto</tt>, a class template can be used as well with the same
-	rules for independent resolution and forwarding references. (Of course, 
+	rules for independent resolution and forwarding references. Of course, 
 	if a different approach from P1141 is adopted for constrained declarations,
-	this proposal should follow that). 
+	this proposal should follow that. Likewise, note that we do not take a position on where
+    <tt>auto</tt> should be required, simply that the same rules should apply to CTAD inferencing and concept inferencing to best maintain consistency between concepts and types. 
 	<p>Let	us look at some particular cases.</p>
 <h3>Ordinary declarations</h3>
 In P1141R0, it is mentioned that in
@@ -123,16 +125,14 @@ one should also be able to indicate that a declaration has its arguments
 	deduced by
 	<blockquote><pre class="brush:cpp">void f1(tuple auto x);</pre></blockquote>
 
-This is not only more consistent, but it can help avoid
-the need to write function templates where some arguments are dependent as
-class templates and other arguments are dependent as concepts. The following
-example shows how beneficial that can be (and also illustrates
-	the value of the proposal for partially-specialized
-	template argument lists in P1021R0)
+This is not only more consistent, but we think it can have a huge impact on facilitating
+terse notation as now almost any function template could be written using natural function notation as
+shown by the following example (which also demonstrates the value of partially-specialized
+	template argument lists as proposed in P1021R0)
 extension
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
 <tr><td>
-<pre class="brush:cpp">// We need an explicit template here because of both class template and concept arguments
+<pre class="brush:cpp">// We need an explicit template here because of confusing mix of both class template and concept arguments
 template&lt;class CharT, class Traits&gt;
 auto f(Curve auto &amp;c, basic_ostream&lt;charT, Traits&gt; logger)
   -&gt; pair&lt;decltype(c), pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt;&gt;
@@ -160,15 +160,19 @@ pair auto f(Curve auto &amp;c, basic_ostream auto logger)
 
   pmr::vector cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);
   logger &lt;&lt; "Got control points: ";
-  // See P1021R0 for partially-specializing ostream_iterator
+  // See D1021R1 for partially-specializing ostream_iterator
   copy(cp.begin(), cp.end(), 
        ostream_iterator&lt;decltype(cp[0])&gt;(logger, ", "));
   return {c, cp};
 };</pre></td>
 </tr></table>
+We think things like the above example will be very common, and, 
+    without this proposal, terse notation will not be applicable to 
+    many function templates.
+    
 <h3>Specialization</h3>
 As Zhihao Yuan notes, the partially-specialized template argument list support proposed in
-D1021R1 naturally supports the useful alignment
+D1168R0 naturally supports the useful alignment
 <blockquote><pre class="brush:cpp">tuple&lt;Copyable&gt; t(1);</pre></blockquote>
 <!-- <h2>Futures</h2>
 The proposals in this paper not only immediately increase consistency, but
