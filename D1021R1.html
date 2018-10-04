@@ -88,22 +88,36 @@ In other words, deduction should take place simply from the arguments. Since it 
 
 <h2>Class Template Argument Deduction for alias templates</h2>
 While Class Template Argument Deduction makes type inferencing easier when constructing classes,
-it doesn't work for type aliases, penalizing the use of type aliases and creating unnecessary inconsistency. We propose allowing Class Template Argument Deduction for type aliases. The following example illustrates
-how it makes <tt>pmr::vector</tt> as easy to deduce as <tt>vector</tt> (<tt>c</tt>:
-<table border="1"><tr><th><tt>vector</tt></th><th><tt>pmr::vector</tt> (C++17)</th><th>pmr::vector (proposed)</th></tr>
-<tr>
+it doesn't work for type aliases, penalizing the use of type aliases and creating unnecessary inconsistency.
+    We propose allowing Class Template Argument Deduction for type aliases as illustrated
+    by the following example taken from <a href="https://parasol.tamu.edu/people/bs/622-GP/Templates.pdf">this</a> template programming overview due to Andrew Sutton
+<table border="1"><tr><td colspan="2">
+    <pre class="brush:cpp">template&lt;typename T, typename U&gt; 
+using ptr_pair = pair&lt;T*, U*&gt;;</pre></td></tr>
+<tr><th>C++17</th><th>Proposed</th></tr>
+<tr><td>
+    <pre class="brush:cpp">int i{}, j{};
+pair p(&amp;i, &amp;j); // OK. Deduces pair&lt;int *, int *&gt;
+ptr_pair pp(&amp;i, &amp;j);  // Ill-formed :(</pre></td>
     <td>
-<pre class="brush:cpp">vector v = {1, 2, 3};
-vector v2(cont.begin(), cont.end());</pre>
-    </td>
-    <td><pre class="brush:cpp">pmr::vector&lt;int&gt; v({1, 2, 3}, mem_res);
-pmr::vector&lt;decltype(cont)::value_type&gt; v2(cont.begin(), cont.end(), mem_res);</pre>
-    </td>
-<td><pre class="brush:cpp">pmr::vector v({1, 2, 3}, mem_res);
-pmr::vector v2(cont.begin(), cont.end(), mem_res);</pre>
-</td>
+    <pre class="brush:cpp">int i{}, j{};
+pair p(&amp;i, &amp;j); // OK. Deduces pair&lt;int *, int *&gt;
+ptr_pair pp(&amp;i, &amp;j);  // OK. Deduce ptr_pair&lt;int, int&gt;</pre></td>
 </tr></table>
-In the spirit of alias templates being simply an alias for the type, we do not propose
+    For a more substantive example, let us consider <tt>pmr::vector</tt>. Just as one is used to
+    writing <blockquote><pre class="brush:cpp">vector v = {1, 2, 3}; // vector&lt;int&gt;</pre></blockquote>
+    it would be desirable to have a similar deduction for <tt>pmr::vector</tt>
+    <blockquote><pre class="brush:cpp">pmr::vector pv({1, 2, 3}, mem_res); // Ill-formed, even with type alias deduction</pre></blockquote>
+    Unfortunately, the above example does not work because <tt>pmr::memory_resource</tt> fails to 
+    deduce <tt>pmr::polymorphic_allocator&lt;int&gt;</tt> in the  second argument. We do not think
+    this is so bad because not every legacy API can be expected to automatically take full advantage of new language features (Concepts, anyone?). However, it does seem reasonable to expect a solution going
+    forward for new classes. Indeed, if we were introducing <tt>pmr::vector</tt> at this time, we could
+    make the above example work by indicating that the second parameter should be considered non-deducible:
+    <blockquote><pre class="brush:cpp">namespace pmr {
+  template&lt;typename T&gt;
+  using vector = std::vector&lt;T, identity_t&lt;pmr::polymorphic_allocator&lt;T&gt;&gt;&gt;; // See p0887R0 for identity_t
+}</pre></blockquote>
+ In the spirit of alias templates being simply an alias for the type, we do not propose
 allowing the programmer to write explicit deduction guides specifically for an alias
 template.
 	
@@ -196,6 +210,14 @@ As far back as C++98, this creates a <tt>vector&lt;int, allocator&lt;int&gt;&gt;
         were designed before Class Template Argument Deduction was introduced, while at the same time allowing
 	important examples like the above to be handled correctly (assuming <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/P1069R0.html">P1069R0</a>, which we believe is certainly desirable. Of course, once a class has
 	deduction guides, nearly any desired behavior can be specified, so other examples should be handleable as needed.<p>
+   As another example, Mateusz Pusz has pointed out that partial template
+    argument list will greatly benefit his <a href="https://github.com/mpusz/units">Physical Units library</a> by allowing him to 
+    define his core unit type as 
+    <blockquote><pre class="brush:cpp">template&lt;Unit U = meter, typename Rep&gt;
+using length = quantity&lt;dimension_length, U, Rep&gt;;
+
+length d2&lt;miles&gt;(3); // three miles
+</pre></blockquote>
 <b>Notes:</b><ul><li>As this rule is only relevant for template parameters with default initializers. For class template
 	parameters without default initializers, the programmer can ignore it.</li>
 	<li>Without this rule, no combination of traditional deduction guides could produce this behavior, severely
@@ -223,7 +245,7 @@ is tempting to deduce additional arguments just like <tt>make_tuple&lt;int&gt;(1
 	For example, right-hand side of a deduction guide could be a <em>type-id</em> instead of just
 	a <em>simple-template-id</em>, a  metafunction could compute the deduce different <tt>tuple</tt> types based on
 	whether the last argument is an allocator as well as unrelated use cases such as Richard Smith's delayed forwarding example
-	in P1021R0. but there is absolutely no requirement that this be considered for C++20, so we do not pursue this
+	in P1021R0, but as there is absolutely no requirement that this be considered for C++20, so we do not pursue this
 	any further at this time.</blockquote>
 <h2>Wording</h2>
 <script type="text/javascript">
