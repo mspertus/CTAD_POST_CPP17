@@ -1,53 +1,22 @@
 <!DOCTYPE html>
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <style>
+ <head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link href="http://alexgorbatchev.com/pub/sh/current/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shCore.js" type="text/javascript"></script>
+<!--<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shAutoloader.js" type="text/javascript"></script>-->
+<script src='http://alexgorbatchev.com/pub/sh/current/scripts/shBrushCpp.js' type='text/javascript'></script>
+    <style>
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+body .syntaxhighlighter .line {
+    white-space: pre !important;
+}
 
-.comment { color: #999999; font-style: italic; }
-.pre { color: #000099; }
-.string { color: #009900; }
-.char { color: #009900; }
-.float { color: #996600; }
-.int { color: #999900; }
-.bool { color: #000000; font-weight: bold; }
-.type { color: #FF6633; }
-.flow { color: #FF0000; }
-.keyword { color: #990000; }
-.operator { color: #663300; font-weight: bold; }
-.operator { color: #663300; font-weight: bold; }
-pre.code {
-    border: 2px solid #666;
-    background-color: #F4F4F4;
-    padding-left: 10px;
-    padding-top: 0px;
-}
-code {
-    border: 2px solid #d0d0d0;
-    background-color: LightYellow;
-    padding: 2px;
-    padding-left: 10px;
-    display:table;
-    white-space:pre;
-    margin:2px;
-    margin-bottom:10px;
-}
-dt {
-    font-weight: bold;
-}
-.ins {
-    background-color:#A0FFA0;
-}
-.del {
-    background-color:#FFA0A0;
-    text-decoration:line-through
-}    
-h3 { 
-	margin-bottom: 0;
-}
-h4 { 
-	margin-bottom: 0;
-}
-</style>
+    </style>
 
 <title>Filling holes in Class Template Argument Deduction</title>
 </head>
@@ -74,36 +43,18 @@ that these limitations can be safely removed. Note that most of these items were
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
     to illustrate how much terse constrants benefit from improved inferencing in Class Template
     Argument Deduction, a theme examined in depth in <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/D1168R0.html">D1168R0</a>. 
-<!-- 
-C++17 + P1141R0: 
-Proposed: 
-void f(Curve auto c) {
-  Point<decltype(c.x_min())> top_left{c.x_min(), c.y_max()};
-  pmr::vector<typename decltype(c.ctrl_pts)::value_type> v(c.ctrl_pts.begin(), c.ctr_pts.end(), mem_res);
-  /* ... */
-}
 
-void f(Curve auto c) {
+<table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
+<tr><td><pre class="brush:cpp">void f(Curve auto c) {
+  Point&lt;decltype(c.x_min())&gt; top_left{c.x_min(), c.y_max()};
+  pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt; v(c.ctrl_pts.begin(), c.ctr_pts.end(), mem_res);
+  /* ... */
+}</pre></td>
+<td><pre class="brush:cpp">void f(Curve auto c) {
   Point upper_left_bound{c.x_min(), c.y_max()};
   pmr::vector v(c.ctrl_pts.begin(), c.ctr_pts.end(), mem_res);
   /* ... */
-} -->
-<table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
-<tr><td><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>;</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-
-<span style='color:#800000; font-weight:bold; '>void</span> f<span style='color:#808030; '>(</span>Curve <span style='color:#800000; font-weight:bold; '>auto</span> c<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
-  Point<span style='color:#808030; '>&lt;</span>decltype<span style='color:#808030; '>(</span>c<span style='color:#808030; '>.</span>x_min<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span> top_left<span style='color:#800080; '>{</span>c<span style='color:#808030; '>.</span>x_min<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> c<span style='color:#808030; '>.</span>y_max<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-  pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>typename</span> decltype<span style='color:#808030; '>(</span>c<span style='color:#808030; '>.</span>ctrl_pts<span style='color:#808030; '>)</span><span style='color:#800080; '>::</span>value_type<span style='color:#808030; '>></span> cp<span style='color:#808030; '>(</span>c<span style='color:#808030; '>.</span>ctrl_pts<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> c<span style='color:#808030; '>.</span>ctr_pts<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-  <span style='color:#696969; '>/* ... */</span>
-<span style='color:#800080; '>}</span></pre></td>
-<td><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-
-<span style='color:#800000; font-weight:bold; '>void</span> f<span style='color:#808030; '>(</span>Curve <span style='color:#800000; font-weight:bold; '>auto</span> c<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
-  Point top_left<span style='color:#800080; '>{</span>c<span style='color:#808030; '>.</span>x_min<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> c<span style='color:#808030; '>.</span>y_max<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-  pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span> cp<span style='color:#808030; '>(</span>c<span style='color:#808030; '>.</span>ctrl_pts<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> c<span style='color:#808030; '>.</span>ctr_pts<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-  <span style='color:#696969; '>/* ... */</span>
-<span style='color:#800080; '>}</span>
-</pre></td></tr></table>
+} </pre></td></tr></table>
  To see that this really falls under the category of filling holes, the above code would work in C++17
 if we just gave <tt>Point</tt> a two argument constructor corresponding to aggregate initialization
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
@@ -114,30 +65,16 @@ We propose that Class Template Argument Deduction works for aggregate initializa
 	by the following example, where <tt>v</tt> is a vector of (some specialization of) <tt>Point</tt> 
 	and <tt>f()</tt> returns a vector of (some specialization of) <tt>Point</tt>:
 <table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
-<td><!--
-// Point is aggregate, as intended
-template<class T> 
+<td><pre class="brush:cpp">template&lt;class T&gt;
 struct Point { T x; T y};
 
 // Aggregate: Cannot deduce
-Point<double> p{3.0, 4.0};
-Point<double> p2 {.x = 3.0, .y = 4.0};
-Point<decltype(v[0].x)> p3 = v[0];
-Point</*????*/> p4 = f()[0];
--->
-<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// Point is aggregate, as intended</span>
-<span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> 
-<span style='color:#800000; font-weight:bold; '>struct</span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-
-<span style='color:#696969; '>// Aggregate: Cannot deduce</span>
-Point<span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>double</span><span style='color:#800080; '>></span> p<span style='color:#800080; '>{</span><span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-Point<span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>double</span><span style='color:#800080; '>></span> p2 <span style='color:#800080; '>{</span><span style='color:#808030; '>.</span>x <span style='color:#808030; '>=</span> <span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>.</span>y <span style='color:#808030; '>=</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-Point<span style='color:#808030; '>&lt;</span>decltype<span style='color:#808030; '>(</span>v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>.</span>x<span style='color:#808030; '>)</span><span style='color:#808030; '>></span> p3 <span style='color:#808030; '>=</span> v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
-Point<span style='color:#808030; '>&lt;</span><span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>></span> p4 <span style='color:#808030; '>=</span> f<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
-</pre>
+Point&lt;double&gt; p{3.0, 4.0};
+Point&lt;double&gt; p2 {.x = 3.0, .y = 4.0};
+Point&lt;decltype(v[0].x)&gt; p3 = v[0];
+Point&lt;/*????*/&gt; p4 = f()[0];</pre>
 </td>    
-    <td><!--// Point is aggregate, as intended
-template<class T> 
+    <td><pre class="brush:cpp">template&lt;class T&gt;
 struct Point { T x; T y};
 
 // Proposed: Aggregates deduce
@@ -145,15 +82,6 @@ Point p{3.0, 4.0};
 Point p2 {.x = 3.0, .y = 4.0};
 Point p3 = v[0];
 Point p4 = f()[0];
---><pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// Point is aggregate, as intended</span>
-<span style='color:#800000; font-weight:bold; '>template</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>class</span> T<span style='color:#800080; '>></span> 
-<span style='color:#800000; font-weight:bold; '>struct</span> Point <span style='color:#800080; '>{</span> T x<span style='color:#800080; '>;</span> T y<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-
-<span style='color:#696969; '>// Proposed: Aggregates deduce</span>
-Point p<span style='color:#800080; '>{</span><span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-Point p2 <span style='color:#800080; '>{</span><span style='color:#808030; '>.</span>x <span style='color:#808030; '>=</span> <span style='color:#008000; '>3.0</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>.</span>y <span style='color:#808030; '>=</span> <span style='color:#008000; '>4.0</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-Point p3 <span style='color:#808030; '>=</span> v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
-Point p4 <span style='color:#808030; '>=</span> f<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
 </pre></td>
     </table>
 
@@ -167,31 +95,14 @@ how it makes <tt>pmr::vector</tt> as easy to deduce as <tt>vector</tt> (<tt>c</t
 <table border="1"><tr><th><tt>vector</tt></th><th><tt>pmr::vector</tt> (C++17)</th><th>pmr::vector (proposed)</th></tr>
 <tr>
     <td>
-<!-- 
-vector v = {1, 2, 3};
-vector v2(cont.begin(), cont.end());
--->
-<pre style='color:#000000;background:#ffffff;'><span style='color:#603000; '>vector</span> v <span style='color:#808030; '>=</span> <span style='color:#800080; '>{</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-<span style='color:#603000; '>vector</span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-</pre>
+<pre class="brush:cpp">vector v = {1, 2, 3};
+vector v2(cont.begin(), cont.end());</pre>
     </td>
-    <td>
-<!-- 
-pmr::vector<int> v({1, 2, 3}, mem_res);
-pmr::vector<decltype(cont)::value_type> v2(cont.begin(), cont.end(), mem_res);
--->
-<pre style='color:#000000;background:#ffffff;'>pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#800080; '>></span> v<span style='color:#808030; '>({</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>},</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>decltype<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>)</span><span style='color:#800080; '>::</span>value_type<span style='color:#800080; '>></span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-</pre>
+    <td><pre class="brush:cpp">pmr::vector&lt;int&gt; v({1, 2, 3}, mem_res);
+pmr::vector&lt;decltype(cont)::value_type&gt; v2(cont.begin(), cont.end(), mem_res);</pre>
     </td>
-<td>
- <!-- 
-pmr::vector v({1, 2, 3}, mem_res);
-pmr::vector v2(cont.begin(), cont.end(), mem_res);
--->
-<pre style='color:#000000;background:#ffffff;'>pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span> v<span style='color:#808030; '>({</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>}</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-pmr<span style='color:#800080; '>::</span><span style='color:#603000; '>vector</span> v2<span style='color:#808030; '>(</span>cont<span style='color:#808030; '>.</span>begin<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> cont<span style='color:#808030; '>.</span>end<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> mem_res<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-</pre>
+<td><pre class="brush:cpp">pmr::vector v({1, 2, 3}, mem_res);
+pmr::vector v2(cont.begin(), cont.end(), mem_res);</pre>
 </td>
 </tr></table>
 In the spirit of alias templates being simply an alias for the type, we do not propose
@@ -199,132 +110,77 @@ allowing the programmer to write explicit deduction guides specifically for an a
 template.
 	
 <h2>Deducing from inherited constructors</h2>
-According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users just expect code like the following
-    to work:
+In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
+	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users are
+surprised that construction behavior changes:
 <table border="1"><tr><td colspan="2">
-<!--
-// Preferable to templatize on Invocable types because more general than function pointers
-template <typename T> struct Base requires Invocable<T> { 
-  Base(T);
-  virtual void someMethod();
+<pre class="brush:cpp">template &lt;typename T&gt; struct CallObserver requires Invocable&lt;T&gt; { 
+  CallObserver(T &amp;&amp;) : t(std::forward&lt;T&gt;(t)) {}
+  virtual void observeCall() { t(); }
+  T t;
 };
 
-template <typename T> struct Derived : public Base<T> { 
-  using Base<T>::Base; 
-  virtual void SomeMethod() override; // Specialize some behavior
-};
--->
-<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// Preferable to templatize on Invocable types because more general than function pointers</span>
-<span style='color:#800000; font-weight:bold; '>template</span> <span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>typename</span> T<span style='color:#800080; '>></span> <span style='color:#800000; font-weight:bold; '>struct</span> Base <span style='color:#800000; font-weight:bold; '>requires</span> Invocable<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span> <span style='color:#800080; '>{</span>
-  <span style='color:#800000; font-weight:bold; '>virtual</span> <span style='color:#800000; font-weight:bold; '>void</span> someMethod<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-
-<span style='color:#800000; font-weight:bold; '>template</span> <span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>typename</span> T<span style='color:#800080; '>></span> <span style='color:#800000; font-weight:bold; '>struct</span> Derived <span style='color:#800080; '>:</span> <span style='color:#800000; font-weight:bold; '>public</span> Base<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span> <span style='color:#800080; '>{</span> 
-  <span style='color:#800000; font-weight:bold; '>using</span> Base<span style='color:#800080; '>&lt;</span>T<span style='color:#800080; '>></span><span style='color:#800080; '>::</span>Base<span style='color:#800080; '>;</span> 
-  <span style='color:#800000; font-weight:bold; '>virtual</span> <span style='color:#800000; font-weight:bold; '>void</span> SomeMethod<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span> override<span style='color:#800080; '>;</span> <span style='color:#696969; '>// Specialize some behavior</span>
-<span style='color:#800080; '>}</span><span style='color:#800080; '>;</span>
-</pre>
-    </td></tr>
+template &lt;typename T&gt; struct CallLogger : public CallObserver&lt;T&gt; { 
+  using CallObserver&lt;T&gt;::CallObserver; 
+  virtual void observeCall() override { cout &lt;&lt; "calling"; t();  }
+};</pre>
+</td></tr>
 <tr><th>C++17</th> <th>Proposed</th></tr>
 <tr><td>
-<!--
-Base b([]() { /* ... */ }); // OK
-Derived d([]() { /* ... */ }); // Oops: Can't deduce from inherited constructor
--->
-<pre style='color:#000000;background:#ffffff;'>Base b<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>({</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// OK</span>
-<s>Derived d<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#808030; '>){</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span></s> <span style='color:#696969; '>// Oops: Can't deduce from inherited constructor</span>
-</pre>
-    </td>
-<td>
-<!--
-Base b([]() { /* ... */ }); // OK
-Derived d([]() { /* ... */ }); // Now OK
--->
-<pre style='color:#000000;background:#ffffff;'>Base b<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>({</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// OK</span>
-Derived d<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#808030; '>){</span> <span style='color:#696969; '>/* ... */ }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> <span style='color:#696969; '>// Now OK</span>
-</pre>
+	<pre class="brush:cpp">CallObserver b([]() { /* ... */ }); // OK
+CallLogger&lt;/*????*/&gt; d([]() { /* ... */ });</pre>
+</td>
+<td><pre class="brush:cpp">CallObserver b([]() { /* ... */ }); // OK
+Derived d([]() { /* ... */ }); // Now OK</pre>
     </td></tr></table>
 Note that inheriting the constructors of a base class must include inheriting all the deduction guides, not just the implicit ones. As a number of standard library
 writers use explicit guides to behave &ldquo;as-if&rdquo; their classes were defined as in the standard, such internal implementation details
 details would become visible if only the internal guides were inherited.
 
-<h2>Class Template Argument Deduction and partially-specialized template argument lists</h2>
-    Partially-specialized template argument lists work in Function Template Argument Deduction
+<h2>Class Template Argument Deduction and partial template argument lists</h2>
+    Partial template argument lists can be given in Function Template Argument Deduction
     but surprisingly fail in Class Template Argument Deduction, a restriction we propose removing.
     Not only is this more consistent, but it has powerful applications that resolve longstanding
     difficulties in C++, such as creating associative containers with lambda comparators, as the following 
     example shows.
     <table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
-<tr><td><!--
-using namespace ba = boost::algorithm;
+<tr><td><pre class="brush:cpp">using namespace ba = boost::algorithm;
 
-set<string, ba::ilexicographic_compare> case_insensitive_strings(ba::ilexicographic_compare);
+set&lt;string, ba::ilexicographic_compare&gt; case_insensitive_strings(ba::ilexicographic_compare);
 
 // Lambda comparators are great for algorithms like sort
 // Why can't we use them for associative containers?
-set<int, /* ???? */> s([](int i, int j) { 
-                          return std::popcount(i) < std::popcount(j); 
+set&lt;int, /* ???? */&gt; s([](int i, int j) { 
+                          return std::popcount(i) &lt; std::popcount(j); 
                      }); 
 
 // Or container adaptors?
-priority_queue<Task, vector<Task>, /* ???? */> tasks([](Task a, Task b) {
-                                                     return a.priority < b.priority;
-                                                   }); 
--->
-    
-<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
-
-<span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>,</span> ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#800080; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-
-<span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
-<span style='color:#696969; '>// Why can't we use them for associative containers?</span>
-<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span>
-                    <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; 
-                 }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
-
-<span style='color:#696969; '>// Or container adaptors?</span>
-<span style='color:#603000; '>priority_queue</span><span style='color:#808030; '>&lt;</span>Task<span style='color:#808030; '>,</span> <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span><span style='color:#808030; '>,</span> <span style='color:#ffffff; background:#808000; '>????</span><span style='color:#808030; '>> tasks(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span>
-                                               <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; 
-                                             }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-</pre>
+priority_queue&lt;Task, vector&lt;Task&gt;, /* ???? */&gt; tasks([](Task a, Task b) {
+                                                     return a.priority &lt; b.priority;
+                                                   }); </pre>
     </td>
-<td><!--using namespace ba = boost::algorithm;
+<td><pre class="brush:cpp">using namespace ba = boost::algorithm;
 
-set<string> case_insensitive_strings(ba::ilexicographic_compare);
+set&lt;string&gt; case_insensitive_strings(ba::ilexicographic_compare);
 
 // Lambda comparators are great for algorithms like sort
 // Now with associative containers, too!
-set<int> s([](int i, int j) { 
-              return std::popcount(i) < std::popcount(j);
+set&lt;int&gt; s([](int i, int j) { 
+              return std::popcount(i) &lt; std::popcount(j);
             }); 
 
 // and container adaptors!
-priority_queue<Task> tasks([](Task a, Task b) { 
-                              return a.priority < b.priority;
-                         }); 
---><pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>using</span> <span style='color:#800000; font-weight:bold; '>namespace</span> ba <span style='color:#808030; '>=</span> boost<span style='color:#800080; '>::</span>algorithm<span style='color:#800080; '>;</span>
-
-<span style='color:#603000; '>set</span><span style='color:#800080; '>&lt;</span><span style='color:#603000; '>string</span><span style='color:#808030; '>></span> case_insensitive_strings<span style='color:#808030; '>(</span>ba<span style='color:#800080; '>::</span>ilexicographic_compare<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-
-<span style='color:#696969; '>// Lambda comparators are great for algorithms like sort</span>
-<span style='color:#696969; '>// Now with associative containers, too!</span>
-<span style='color:#603000; '>set</span><span style='color:#808030; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#808030; '>></span> s<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>int</span> j<span style='color:#808030; '>){</span>
-              <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>i<span style='color:#808030; '>)</span> <span style='color:#808030; '>&lt;</span> <span style='color:#666616; '>std</span><span style='color:#800080; '>::</span>popcount<span style='color:#808030; '>(</span>j<span style='color:#808030; '>)</span><span style='color:#800080; '>; 
-            }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span> 
-
-<span style='color:#696969; '>// And container adaptors!</span>
-<span style='color:#603000; '>priority_queue</span><span style='color:#800080; '>&lt;</span>Task<span style='color:#800080; '>></span> tasks<span style='color:#808030; '>(</span><span style='color:#808030; '>[</span><span style='color:#808030; '>]</span><span style='color:#808030; '>(</span>Task a<span style='color:#808030; '>,</span> Task b<span style='color:#808030; '>) {</span>
-                              <span style='color:#800000; font-weight:bold; '>return</span> a<span style='color:#808030; '>.</span>priority <span style='color:#808030; '>&lt;</span> b<span style='color:#808030; '>.</span>priority<span style='color:#800080; '>; 
-                            }</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
-</pre></td></tr></table>   
+priority_queue&lt;Task&gt; tasks([](Task a, Task b) { 
+                              return a.priority &lt; b.priority;
+                         });</pre></td></tr></table>   
 
 <h3>Technical considerations</h3>
     The above discussion naturally begs the question as to why partially-specialized template
     argument lists in Class Template Argument Discussion from the beginning. This feature
     was deferred in C++17 out of concern that it could result in breaking changes when partially-specialized
     template argument lists were combined with default arguments. Consider the expression
-    <pre>    <span style='color:#603000; '>vector</span><span style='color:#800080; '>&lt;</span><span style='color:#800000; font-weight:bold; '>int</span><span style='color:#800080; '>></span><span style='color:#808030; '>(</span>MyAlloc<span style='color:#808030; '>(</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span></pre>
-As far back as C++98, this creates a <tt>vector&lt;int, &lt;allocator&lt;int&gt;&gt;</tt>,
+    <blockquote><pre class="brush:cpp">vector&lt;int&gt;(MyAlloc())</pre></blockquote>
+As far back as C++98, this creates a <tt>vector&lt;int, allocator&lt;int&gt;&gt;</tt>,
     although it is unlikely to compile because <tt>MyAlloc</tt> almost certainly is not
     convertible to <tt>allocator&lt;int&gt;</tt>. By contrast, ordinary function template
     argument deduction would of course deduce <tt>vector&lt;int, MyAlloc&gt;</tt>.
@@ -344,4 +200,8 @@ Function Template Argument Deduction behavior is a good choice here because it c
     does, and as Nico Josuttis has observed, it would be bizarre if they deduced anything different.</p>
 
 <h2>Wording</h2>
-    </body></html>
+<script type="text/javascript">
+	SyntaxHighlighter.defaults['gutter'] = false;
+     SyntaxHighlighter.all()
+</script>
+	</body></html>
