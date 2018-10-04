@@ -210,8 +210,8 @@ As far back as C++98, this creates a <tt>vector&lt;int, allocator&lt;int&gt;&gt;
         were designed before Class Template Argument Deduction was introduced, while at the same time allowing
 	important examples like the above to be handled correctly (assuming <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/P1069R0.html">P1069R0</a>, which we believe is certainly desirable. Of course, once a class has
 	deduction guides, nearly any desired behavior can be specified, so other examples should be handleable as needed.<p>
-   As another example, Mateusz Pusz has pointed out that partial template
-    argument list will greatly benefit his <a href="https://github.com/mpusz/units">Physical Units library</a> by allowing him to 
+   As another example, Mateusz Pusz has pointed out that such partial template
+    argument list support will greatly benefit his <a href="https://github.com/mpusz/units">Physical Units library</a> by allowing him to 
     define his core unit type as 
     <blockquote><pre class="brush:cpp">template&lt;Unit U = meter, typename Rep&gt;
 using length = quantity&lt;dimension_length, U, Rep&gt;;
