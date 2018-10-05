@@ -131,6 +131,21 @@ For deriving deduction guides for the alias templates from guides in the class, 
     deducing the alias from the result type. Note that a constraint may be necessary
     as whether and how to deduce the alias from the result type may depend on the
     actual argument types.</li></ol>
+Let us illustrate this process with an example. Consider the following example:
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; using P = pair&lt;int, T&gt;;</pre></blockquote>
+Naively using the deduction guides from pair is not ideal because they
+    cannot necessarily deduce objects of type <tt>P</tt> even
+    from arguments that should obviously work, like <tt>P({}, 0)</tt>. However,
+    let us apply the above procedure. The relevant deduction guide is
+<blockquote><pre class="brush:cpp">template&lt;class A, class B&gt; pair(A, B) -&gt; pair&lt;A, B&gt;</pre></blockquote>
+Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> for <code>A</code>
+    and <code>T</code> for <code>B</code>. Now substitute back into the deduction guide to get
+    a new deduction guide
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; pair(int, T) -&gt; pair&lt;int, T&gt;;</pre></blockquote>
+Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; P(int, T) -&gt; P&lt;T&gt;;</pre></blockquote>
+A repository of supplementary worked out examples used in the refinement of this algorithm 
+    is maintaned at 
 <h2>Deducing from inherited constructors</h2>
 In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
 	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users are

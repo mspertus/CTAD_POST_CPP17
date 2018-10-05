@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+ <link href="http://alexgorbatchev.com/pub/sh/current/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shCore.js" type="text/javascript"></script>
+<!--<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shAutoloader.js" type="text/javascript"></script>-->
+<script src='http://alexgorbatchev.com/pub/sh/current/scripts/shBrushCpp.js' type='text/javascript'></script>
+    <style>
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+body .syntaxhighlighter .line {
+    white-space: pre !important;
+}
+
+    </style>
+
+<title>CTAD for alias templates algorithm examples</title>
+</head>
+
+<body>
+<p>Mike Spertus, Symantec<br>
+<a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
+</p>
+<h1>CTAD for alias templates algorithm examples</h1>
+<h1>Algorithm</h1>
+For deriving deduction guides for the alias templates from guides in the class, we use the following approach (for which we are very grateful for the invaluable assistance of Richard Smith):
+<ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
+    the deduction guide from the alias template. We do not require that this deduces all the template
+    parameters as nondeducible contexts may of course occur in general</li>
+    <li>Substitute any deductions made back into the deduction guides</li>
+    <li>Derive the corresponding deduction guide for the alias template by 
+    deducing the alias from the result type. Note that a constraint may be necessary
+    as whether and how to deduce the alias from the result type may depend on the
+    actual argument types.</li></ol>
+<h1>Examples</h1>
+<h2>Fixing an argument</h2>
+    <blockquote><pre class="brush:cpp">template&lt;class T&gt; using P = pair&lt;int, T&gt;;</pre></blockquote>
+Naively using the deduction guides from pair is not ideal because they
+    cannot necessarily deduce objects of type <tt>P</tt> even
+    from arguments that should obviously work, like <tt>P({}, 0)</tt>. However,
+    let us apply the above procedure. The relevant deduction guide is
+<blockquote><pre class="brush:cpp">template&lt;class A, class B&gt; pair(A, B) -&gt; pair&lt;A, B&gt;</pre></blockquote>
+Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> for <code>A</code>
+    and <code>T</code> for <code>B</code>. Now substitute back into the deduction guide to get
+    a new deduction guide
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; pair(int, T) -&gt; pair&lt;int, T&gt;;</pre></blockquote>
+Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; P(int, T) -&gt; P&lt;T&gt;;</pre></blockquote>
+<h2>Renaming</h2>
+In the following example, the programmer just wants to give a class template a shorter name
+without changing behavior
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; class VeryLongNameXXXXX { /* ... */ };
+template&lt;class T&gt; class VeryLongNameXXXXX(T) -> VeryLongNameXXXXX&lt;decay_t&lt;T&gt;&gt;;
+
+// Alias that programmer expects to be the same as original type
+template&lt;class T&gt; using MyAbbrev = VeryLongNameXXXXXX&lt;T&gt;;</pre></blockquote>
+In this case, plugging in <code>(A)</code> for the nondecible context <code>(decay_t&lt;T&gt;)</code> does not deduce anything, so the deduction guide remains the same. Deducing the template arguments
+for the (identical!) alias template is easy, yielding the desired deduction guide for the alias template.
+<blockquote><pre class="brush:cpp">template&lt;class T&gt; class MyAbbrev(T) -> MyAbbrev&lt;decay_t&lt;T&gt;&gt;;</pre></blockquote>
+<script type="text/javascript">
+	SyntaxHighlighter.defaults['gutter'] = false;
+     SyntaxHighlighter.all()
+</script>
+	</body></html>
