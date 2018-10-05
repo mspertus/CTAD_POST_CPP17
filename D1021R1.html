@@ -145,7 +145,7 @@ Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> f
 Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; P(int, T) -&gt; P&lt;T&gt;;</pre></blockquote>
 A repository of supplementary worked out examples used in the refinement of this algorithm 
-    is maintaned at 
+    is maintained <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
 <h2>Deducing from inherited constructors</h2>
 In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
 	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users are
