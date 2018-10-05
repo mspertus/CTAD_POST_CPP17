@@ -46,19 +46,19 @@ that these limitations can be safely removed. Note that most of these items were
 <table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
 <tr><td><pre class="brush:cpp">void f(Curve auto c) {
   Point&lt;decltype(c.x_min())&gt; top_left{c.x_min(), c.y_max()};
-  pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt; v(c.ctrl_pts.begin(), c.ctr_pts.end(), mem_res);
+  pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt; v(c.ctrl_pts.begin(), c.ctr_pts.end());
   /* ... */
 }</pre></td>
 <td><pre class="brush:cpp">void f(Curve auto c) {
   Point upper_left_bound{c.x_min(), c.y_max()};
-  pmr::vector v(c.ctrl_pts.begin(), c.ctr_pts.end(), mem_res);
+  pmr::vector v(c.ctrl_pts.begin(), c.ctr_pts.end());
   /* ... */
 } </pre></td></tr></table>
  To see that this really falls under the category of filling holes, the above code would work in C++17
 if we just gave <tt>Point</tt> a two argument constructor corresponding to aggregate initialization
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
-<p>Finally, we conclude the paper with an instructive example from the wild that we fill illustrates
-    well the potential benefits from such filling of holes.</p>
+<p>Finally, we conclude the paper with an instructive example from the wild that we feel well illustrates
+    the potential benefits from such filling of holes.</p>
     
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as one
