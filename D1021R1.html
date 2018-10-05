@@ -88,39 +88,49 @@ In other words, deduction should take place simply from the arguments. Since it 
 
 <h2>Class Template Argument Deduction for alias templates</h2>
 While Class Template Argument Deduction makes type inferencing easier when constructing classes,
-it doesn't work for type aliases, penalizing the use of type aliases and creating unnecessary inconsistency.
-    We propose allowing Class Template Argument Deduction for type aliases as illustrated
-    by the following example taken from <a href="https://parasol.tamu.edu/people/bs/622-GP/Templates.pdf">this</a> template programming overview due to Andrew Sutton
-<table border="1"><tr><td colspan="2">
-    <pre class="brush:cpp">template&lt;typename T, typename U&gt; 
-using ptr_pair = pair&lt;T*, U*&gt;;</pre></td></tr>
-<tr><th>C++17</th><th>Proposed</th></tr>
-<tr><td>
-    <pre class="brush:cpp">int i{}, j{};
-pair p(&amp;i, &amp;j); // OK. Deduces pair&lt;int *, int *&gt;
-ptr_pair pp(&amp;i, &amp;j);  // Ill-formed :(</pre></td>
+it doesn't work for type aliases, penalizing the use of type aliases and creating unnecessary inconsistency.We propose allowing Class Template Argument Deduction for type aliases as in the following example.
+
+    <table border="1"><tr><th><tt>vector</tt></th><th><tt>pmr::vector</tt> (C++17)</th><th>pmr::vector (proposed)</th></tr>
+<tr>
     <td>
-    <pre class="brush:cpp">int i{}, j{};
-pair p(&amp;i, &amp;j); // OK. Deduces pair&lt;int *, int *&gt;
-ptr_pair pp(&amp;i, &amp;j);  // OK. Deduce ptr_pair&lt;int, int&gt;</pre></td>
+<pre class="brush:cpp">vector v = {1, 2, 3};
+vector v2(cont.begin(), cont.end());</pre>
+    </td>
+    <td><pre class="brush:cpp">pmr::vector&lt;int&gt; v = {1, 2, 3};
+pmr::vector&lt;decltype(cont)::value_type&gt; v2(cont.begin(), cont.end());</pre>
+    </td>
+<td><pre class="brush:cpp">pmr::vector v = {1, 2, 3};
+pmr::vector v2(cont.begin(), cont.end());</pre>
+</td>
 </tr></table>
-    For a more substantive example, let us consider <tt>pmr::vector</tt>. Just as one is used to
-    writing <blockquote><pre class="brush:cpp">vector v = {1, 2, 3}; // vector&lt;int&gt;</pre></blockquote>
-    it would be desirable to have a similar deduction for <tt>pmr::vector</tt>
-    <blockquote><pre class="brush:cpp">pmr::vector pv({1, 2, 3}, mem_res); // Ill-formed, even with type alias deduction</pre></blockquote>
-    Unfortunately, the above example does not work because <tt>pmr::memory_resource</tt> fails to 
-    deduce <tt>pmr::polymorphic_allocator&lt;int&gt;</tt> in the  second argument. We do not think
-    this is so bad because not every legacy API can be expected to automatically take full advantage of new language features (Concepts, anyone?). However, it does seem reasonable to expect a solution going
-    forward for new classes. Indeed, if we were introducing <tt>pmr::vector</tt> at this time, we could
-    make the above example work by indicating that the second parameter should be considered non-deducible:
+    <tt>pmr::vector</tt> also serves to illustrate another interesting case. While one might
+    be tempted to write
+    <blockquote><pre class="brush:cpp">pmr::vector pv({1, 2, 3}, mem_res); // Ill-formed (C++17 and proposed)</pre></blockquote>
+    this example is ill-formed by the normal rules of template argument deduction because
+    <tt>pmr::memory_resource</tt> fails to 
+    deduce <tt>pmr::polymorphic_allocator&lt;int&gt;</tt> in the  second argument. 
+    <p>While this is to be expected, one suspects that if Class Template Argument Deduction
+        for alias templates were around when <tt>pmr::vector</tt> was being designed,
+        we would have considered allowing such an inference as safe and useful in this context,
+        which could be done by indicating that the second parameter should be considered non-deducible:
     <blockquote><pre class="brush:cpp">namespace pmr {
   template&lt;typename T&gt;
   using vector = std::vector&lt;T, identity_t&lt;pmr::polymorphic_allocator&lt;T&gt;&gt;&gt;; // See p0887R0 for identity_t
-}</pre></blockquote>
- In the spirit of alias templates being simply an alias for the type, we do not propose
+}
+pmr::vector pv({1, 2, 3}, mem_res); // OK with this definition</pre></blockquote>
+ Finally, in the spirit of alias templates being simply an alias for the type, we do not propose
 allowing the programmer to write explicit deduction guides specifically for an alias
 template.
-	
+<h3>Algorithm</h3>
+For deriving deduction guides for the alias templates from guides in the class, we use the following approach (for which we are very grateful for the invaluable assistance of Richard Smith):
+<ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
+    the deduction guide from the alias template. We do not require that this deduces all the template
+    parameters as nondeducible contexts may of course occur in general</li>
+    <li>Substitute any deductions made back into the deduction guides</li>
+    <li>Derive the corresponding deduction guide for the alias template by 
+    deducing the alias from the result type. Note that a constraint may be necessary
+    as whether and how to deduce the alias from the result type may depend on the
+    actual argument types.</li></ol>
 <h2>Deducing from inherited constructors</h2>
 In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
 	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users are
