@@ -129,11 +129,15 @@ For deriving deduction guides for the alias templates from guides in the class, 
 <ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
     the deduction guide from the alias template. We do not require that this deduces all the template
     parameters as nondeducible contexts may of course occur in general</li>
-    <li>Substitute any deductions made back into the deduction guides</li>
+    <li>Substitute any deductions made back into the deduction guides. Since the previous step may not
+    have deduced all template parameters of the deduction guide, the new guide may have template
+    parameters from both the type alias and the original deduction guide.</li>
     <li>Derive the corresponding deduction guide for the alias template by 
     deducing the alias from the result type. Note that a constraint may be necessary
     as whether and how to deduce the alias from the result type may depend on the
-    actual argument types.</li></ol>
+    actual argument types.</li>
+    <li>The guide generated from the copy deduction guide should be given
+    the precedence associated with copy deduction guides during overload resolution</li></ol>
 Let us illustrate this process with an example. Consider the following example:
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; using P = pair&lt;int, T&gt;;</pre></blockquote>
 Naively using the deduction guides from pair is not ideal because they
@@ -147,7 +151,7 @@ Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> f
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; pair(int, T) -&gt; pair&lt;int, T&gt;;</pre></blockquote>
 Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; P(int, T) -&gt; P&lt;T&gt;;</pre></blockquote>
-A repository of supplementary worked out examples used in the refinement of this algorithm 
+A repository of additional expository materials and worked out examples used in the refinement of this algorithm 
     is maintained <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
 <h2>Deducing from inherited constructors</h2>
 In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.

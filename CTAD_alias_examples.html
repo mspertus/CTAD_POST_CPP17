@@ -24,7 +24,7 @@ body .syntaxhighlighter .line {
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
 </p>
 <h1>CTAD for alias templates algorithm examples</h1>
-<h1>Algorithm</h1>
+<h1>Algorithm Overview</h1>
 For deriving deduction guides for the alias templates from guides in the class, we use the following approach (for which we are very grateful for the invaluable assistance of Richard Smith):
 <ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
     the deduction guide from the alias template. We do not require that this deduces all the template
@@ -34,7 +34,60 @@ For deriving deduction guides for the alias templates from guides in the class, 
     deducing the alias from the result type. Note that a constraint may be necessary
     as whether and how to deduce the alias from the result type may depend on the
     actual argument types.</li></ol>
-<h1>Examples</h1>
+<h1>Conceptual description and example</h1>
+<p>This section gives Richard's nice discussion on how to think about the algorithm.</p>
+Perhaps a nice way to think about the algorithm here is that we're applying (bidirectional) type unification between the produced type of the deduction guide and the alias template. Specifically, we're attempting to find a set of equalities between type expressions involving deduction guide template parameters and type expressions involving alias template parameters. Example: 
+
+<blockquote><pre class="brush:cpp">template&lt;typename T, typename U, typename V&gt; struct Z {
+  Z(typename T:::template R&lt;U&gt;, ...);
+}; 
+struct Q { template&lt;typename U&gt; struct R {}; };
+template&lt;typename T, typename U, typename V&gt;
+  Z(typename T:::template R&lt;U&gt;, V&amp;) -> Z&lt;T, U, V*&gt;
+template&lt;typename X, typename Y&gt; using W = Z&lt;Q, X*, Y&gt;;
+
+W w = {Q::X&lt;int*&gt;(), w};</pre></blockquote>
+
+We take the
+
+<blockquote><pre class="brush:cpp">template&lt;typename T, typename U, typename V&gt;
+  Z(typename T:::template R&lt;U&gt;, V&amp;) -> Z&lt;T, U, V*&gt;</pre></blockquote>
+
+deduction guide and we want to rewrite it as
+
+<blockquote><pre class="brush:cpp">template&lt;typename T, typename U, typename V, typename X, typename Y&gt;
+  Z(typename T:::template R&lt;U&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote>
+
+subject to some equivalences between <code>T</code>, <code>U</code>, <code>V</code>, <code>X</code>, <code>Y</code>. So we attempt to unify <code>Z&lt;Q, X*, Y&gt;</code> with <code>Z&lt;T, U, V*&gt;</code>. This gives:
+<blockquote>
+<code>T = Q<br>
+U = X<br>
+V = ???<br>
+X = ???<br>
+Y = V*</code></blockquote>
+
+[We only care about cases where one side can be reduced to a template parameter. The other cases are:<ul>
+ <li> both sides are non-deduced contexts: we can't deduce anything here (eg, <code>std::decay_t&lt;T&gt; == std::decay_t&lt;U&gt;</code>)</li>
+ <li> one side is non-deduced and the other side is a non-trivial type/non-type expression: we can't deduce anything here (eg, <code>T* = std::decay_t&lt;U&gt;</code>)</li>
+ <li>both sides are non-trivial type/non-type expressions and can't both be reduced: deduction fails (eg, <code>T* = U&amp;</code>)</li></ul><br>
+]
+
+<p>Now, complete the unification:<ul>
+ <li>for each parameter in the deduction guide whose value is expressed in terms of a parameter of the alias template, substitute that away everywhere (including in the RHS of substitutions*):
+
+<blockquote><pre class="brush:cpp">template&lt;typename V, typename X, typename Y&gt;
+  Z(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote></li>
+ <li> and likewise for each parameter in the alias template whose value is expressed in terms of a parameter of the deduction guide:
+
+<blockquote><pre class="brush:cpp">template&lt;typename V, typename X&gt;
+  Z(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, V*&gt;;</pre></blockquote>
+
+... and I believe that's the deduction guide we're looking for.</li>
+
+<li>In the actual algorithm we get -- essentially -- this effect by doing the first round of substitutions before we do the deduction in the opposite direction.</li>
+</ul>
+<h1>Additional examples</h1>
+
 <h2>Fixing an argument</h2>
     <blockquote><pre class="brush:cpp">template&lt;class T&gt; using P = pair&lt;int, T&gt;;</pre></blockquote>
 Naively using the deduction guides from pair is not ideal because they
