@@ -35,7 +35,8 @@ As Timur Doumler has noted when giving public presentations on using CTAD, he ha
 	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, or inherited constructors or obey the normal rules for calling function templates.
     We will show in this paper
 that these limitations can be safely removed. Note that most of these items were intentionally deferred to
-    C++17 with the intent of adding them in C++20. In addition, as is explored in more depth in P????, if terse notation is adopted in C++, it will greatly benefit from having safe easy coding that does not require names
+    C++17 with the intent of adding them in C++20. In addition, as is explored in more depth in 
+    <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/mspertus/CTAD_POST_CPP17/master/D1168R0.html">D1168R0</a>, if terse notation is adopted in C++, it will greatly benefit from having safe easy coding that does not require names
     for types. <p>The following rough example gives an idea of how much filling holes can smooth the road. 
     It also includes some notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
@@ -56,6 +57,8 @@ that these limitations can be safely removed. Note that most of these items were
  To see that this really falls under the category of filling holes, the above code would work in C++17
 if we just gave <tt>Point</tt> a two argument constructor corresponding to aggregate initialization
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
+<p>Finally, we conclude the paper with an instructive example from the wild that we fill illustrates
+    well the potential benefits from such filling of holes.</p>
     
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as one
@@ -172,7 +175,8 @@ Derived d([]() { /* ... */ }); // Now OK</pre>
     </td></tr></table>
 Note that inheriting the constructors of a base class must include inheriting all the deduction guides, not just the implicit ones. As a number of standard library
 writers use explicit guides to behave &ldquo;as-if&rdquo; their classes were defined as in the standard, such internal implementation details
-details would become visible if only the internal guides were inherited.
+details would become visible if only the internal guides were inherited. We of course use the same algorithm
+    for determining deduction guides for the base class template as described above for alias templates.
 
 <h2>Class Template Argument Deduction and partial template argument lists</h2>
     Partial template argument lists can be given in Function Template Argument Deduction
@@ -235,15 +239,7 @@ As far back as C++98, this creates a <tt>vector&lt;int, allocator&lt;int&gt;&gt;
         were designed before Class Template Argument Deduction was introduced, while at the same time allowing
 	important examples like the above to be handled correctly (assuming <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/P1069R0.html">P1069R0</a>, which we believe is certainly desirable. Of course, once a class has
 	deduction guides, nearly any desired behavior can be specified, so other examples should be handleable as needed.<p>
-   As another example, Mateusz Pusz has pointed out that such partial template
-    argument list support will greatly benefit his <a href="https://github.com/mpusz/units">Physical Units library</a> by allowing him to 
-    define his core unit type as 
-    <blockquote><pre class="brush:cpp">template&lt;Unit U = meter, typename Rep&gt;
-using length = quantity&lt;dimension_length, U, Rep&gt;;
-
-length d2&lt;miles&gt;(3); // three miles
-</pre></blockquote>
-<b>Notes:</b><ul><li>As this rule is only relevant for template parameters with default initializers. For class template
+ <b>Notes:</b><ul><li>As this rule is only relevant for template parameters with default initializers. For class template
 	parameters without default initializers, the programmer can ignore it.</li>
 	<li>Without this rule, no combination of traditional deduction guides could produce this behavior, severely
 	limiting the ability to use deduction guides to customize class behavior.</li>
@@ -272,8 +268,29 @@ is tempting to deduce additional arguments just like <tt>make_tuple&lt;int&gt;(1
 	whether the last argument is an allocator as well as unrelated use cases such as Richard Smith's delayed forwarding example
 	in P1021R0, but as there is absolutely no requirement that this be considered for C++20, so we do not pursue this
 	any further at this time.</blockquote>
-<h2>Wording</h2>
-<script type="text/javascript">
+<h2>Illustrative example: tying it together</h2>
+After developing these rules, we had a great opportunity to test them as Mateusz Pusz 
+    approached us about his unit library <a href="https://github.com/mpusz/units">Physical Units library</a>,
+    which uses type aliases, deduction guides, and partial specialization. He wished
+    to define classes like the following in his library
+    <blockquote><pre class="brush:cpp">template&lt;Dimension D, Unit U, typename Rep&gt; class quantity;
+template&lt;Dimension D, Unit U, typename Rep&gt; quantity(Rep r) -> quantity&lt;D, U, Rep&gt;;
+
+template&lt;Unit U = meter, typename Rep = intmax_t&gt;
+using length = quantity&lt;dimension_length, U, Rep&gt;;</pre></blockquote>
+
+Dude to multiple features of the above proposal, all of his desired use cases &ldquo;just work&rdquo;
+<blockquote><pre class="brush:cpp">length d1(3);                 // 3 meters
+length d2(3.14);              // 3.14 meters
+length&lt;mile&gt; d3(3);           // 3 miles
+length&lt;mile&gt; d4(3.14);        // 3.14 miles
+length&lt;mile, float&gt; d3(3.14); // 3.14 miles as float
+</pre></blockquote>
+In particular, this example benefits from
+<ul><li>Class template argument deduction for alias templates</li>
+<li>Class template argument deduction with partial template argument lists</li>
+<li>Explicit deduction guides overriding defaulted template parameters</li></ul>
+    <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
 </script>
