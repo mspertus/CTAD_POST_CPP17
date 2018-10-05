@@ -56,7 +56,7 @@ We take the
 deduction guide and we want to rewrite it as
 
 <blockquote><pre class="brush:cpp">template&lt;typename T, typename U, typename V, typename X, typename Y&gt;
-  Z(typename T:::template R&lt;U&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote>
+  W(typename T:::template R&lt;U&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote>
 
 subject to some equivalences between <code>T</code>, <code>U</code>, <code>V</code>, <code>X</code>, <code>Y</code>. So we attempt to unify <code>Z&lt;Q, X*, Y&gt;</code> with <code>Z&lt;T, U, V*&gt;</code>. This gives:
 <blockquote>
@@ -73,19 +73,20 @@ Y = V*</code></blockquote>
 ]
 
 <p>Now, complete the unification:<ul>
- <li>for each parameter in the deduction guide whose value is expressed in terms of a parameter of the alias template, substitute that away everywhere (including in the RHS of substitutions*):
+ <li>for each parameter in the deduction guide whose value is expressed in terms of a parameter of the alias template, substitute that away everywhere (including in the RHS of substitutions<a href="#fn1">*</a>):
 
 <blockquote><pre class="brush:cpp">template&lt;typename V, typename X, typename Y&gt;
-  Z(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote></li>
+  W(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, Y&gt;;</pre></blockquote></li>
  <li> and likewise for each parameter in the alias template whose value is expressed in terms of a parameter of the deduction guide:
 
 <blockquote><pre class="brush:cpp">template&lt;typename V, typename X&gt;
-  Z(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, V*&gt;;</pre></blockquote>
+  W(Q:::R&lt;X&gt;, V&amp;) -> W&lt;X, V*&gt;;</pre></blockquote>
 
 ... and I believe that's the deduction guide we're looking for.</li>
 
-<li>In the actual algorithm we get -- essentially -- this effect by doing the first round of substitutions before we do the deduction in the opposite direction.</li>
+
 </ul>
+    <a name="fn1">* In the actual algorithm we get -- essentially -- this effect by doing the first round of substitutions before we do the deduction in the opposite direction.</a>
 <h1>Additional examples</h1>
 
 <h2>Fixing an argument</h2>
@@ -109,7 +110,7 @@ template&lt;class T&gt; class VeryLongNameXXXXX(T) -> VeryLongNameXXXXX&lt;decay
 
 // Alias that programmer expects to be the same as original type
 template&lt;class T&gt; using MyAbbrev = VeryLongNameXXXXXX&lt;T&gt;;</pre></blockquote>
-In this case, plugging in <code>(A)</code> for the nondecible context <code>(decay_t&lt;T&gt;)</code> does not deduce anything, so the deduction guide remains the same. Deducing the template arguments
+In this case, plugging in <code>(A)</code> for the nondeducible context <code>(decay_t&lt;T&gt;)</code> does not deduce anything, so the deduction guide remains the same. Deducing the template arguments
 for the (identical!) alias template is easy, yielding the desired deduction guide for the alias template.
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; class MyAbbrev(T) -> MyAbbrev&lt;decay_t&lt;T&gt;&gt;;</pre></blockquote>
 <script type="text/javascript">
