@@ -58,7 +58,7 @@ if we just gave <tt>Point</tt> a two argument constructor corresponding to aggre
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
 <p>
 To give a &ldquo;real-world&rdquo; example, Mateusz Pusz recently 
-    approached us about his unit library <a href="https://github.com/mpusz/units">Physical Units library</a>,
+    approached us about his <a href="https://github.com/mpusz/units">Physical Units library</a>,
     asking why code like the following in his library did not deduce as expected
     <blockquote><pre class="brush:cpp">template&lt;Dimension D, Unit U, typename Rep&gt; class quantity;
 template&lt;Dimension D, Unit U, typename Rep&gt; quantity(Rep r) -> quantity&lt;D, U, Rep&gt;;
