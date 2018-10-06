@@ -56,9 +56,27 @@ that these limitations can be safely removed. Note that any of these items were 
  To see that this really falls under the category of filling holes, the above code would work in C++17
 if we just gave <tt>Point</tt> a two argument constructor corresponding to aggregate initialization
 and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
-<p>Finally, we conclude the paper with an instructive example from the wild that we feel well illustrates
-    the potential benefits from such filling of holes.</p>
-    <hr>
+<p>
+To give a &ldquo;real-world&rdquo; example, Mateusz Pusz recently 
+    approached us about his unit library <a href="https://github.com/mpusz/units">Physical Units library</a>,
+    asking why code like the following in his library did not deduce as expected
+    <blockquote><pre class="brush:cpp">template&lt;Dimension D, Unit U, typename Rep&gt; class quantity;
+template&lt;Dimension D, Unit U, typename Rep&gt; quantity(Rep r) -> quantity&lt;D, U, Rep&gt;;
+
+template&lt;Unit U = meter, typename Rep = intmax_t&gt;
+using length = quantity&lt;dimension_length, U, Rep&gt;;
+
+length d1(3);                 // 3 meters
+length d2(3.14);              // 3.14 meters
+length&lt;mile&gt; d3(3);           // 3 miles
+length&lt;mile&gt; d4(3.14);        // 3.14 miles
+length&lt;mile, float&gt; d3(3.14); // 3.14 miles as float
+</pre></blockquote>
+ We were pleased to discover on examination that the  
+    proposals in this paper for alias templates, partial
+template argument lists, and rules for aligning deduction guides with defaulted template
+parameters would have allowed the above code to work just as expected.
+   <hr>
     <a name="tf" href="#f">*</a> For an in-depth discussion on how
         terse constraints can benefit from improved inferencing without
         requiring named types provided by Class Template
@@ -277,28 +295,6 @@ is tempting to deduce additional arguments just like <tt>make_tuple&lt;int&gt;(1
 	whether the last argument is an allocator as well as unrelated use cases such as Richard Smith's delayed forwarding example
 	in P1021R0, but as there is absolutely no requirement that this be considered for C++20, so we do not pursue this
 	any further at this time.</blockquote>
-<h2>Illustrative example: tying it together</h2>
-After developing these rules, we had a great opportunity to test them as Mateusz Pusz 
-    approached us about his unit library <a href="https://github.com/mpusz/units">Physical Units library</a>,
-    which uses type aliases, deduction guides, and partial specialization. He wished
-    to define classes like the following in his library
-    <blockquote><pre class="brush:cpp">template&lt;Dimension D, Unit U, typename Rep&gt; class quantity;
-template&lt;Dimension D, Unit U, typename Rep&gt; quantity(Rep r) -> quantity&lt;D, U, Rep&gt;;
-
-template&lt;Unit U = meter, typename Rep = intmax_t&gt;
-using length = quantity&lt;dimension_length, U, Rep&gt;;</pre></blockquote>
-
-Dude to multiple features of the above proposal, all of his desired use cases &ldquo;just work&rdquo;
-<blockquote><pre class="brush:cpp">length d1(3);                 // 3 meters
-length d2(3.14);              // 3.14 meters
-length&lt;mile&gt; d3(3);           // 3 miles
-length&lt;mile&gt; d4(3.14);        // 3.14 miles
-length&lt;mile, float&gt; d3(3.14); // 3.14 miles as float
-</pre></blockquote>
-In particular, this example benefits from
-<ul><li>Class template argument deduction for alias templates</li>
-<li>Class template argument deduction with partial template argument lists</li>
-<li>Explicit deduction guides overriding defaulted template parameters</li></ul>
     <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
