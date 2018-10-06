@@ -36,7 +36,7 @@ This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc
 As Timur Doumler has noted when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which always
 	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
     We will show in this paper
-that these limitations can be safely removed. Note that any of these items were intentionally deferred to
+that these limitations can be safely removed. Note that some of these items were intentionally deferred to
     C++17 with the intent of adding them in C++20.  <p>The following example (which also includes
     notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
@@ -245,8 +245,9 @@ priority_queue&lt;Task&gt; tasks([](Task a, Task b) {
 <h3>Technical considerations</h3>
     The above discussion naturally begs the question as to why partial template
     argument lists in Class Template Argument Discussion were not supported from the beginning. This feature
-    was deferred in C++17 out of concern that it could result in breaking changes when partially
-    template argument lists were combined with default arguments or variadic templates. 
+    was deferred until after C++17 to give further time to analyze the possibility of breaking changes when partially
+    template argument lists were combined with default arguments or variadic templates
+    as discussed below. 
 <h4>Default arguments</h4>
 Consider the expression
     <blockquote><pre class="brush:cpp">vector&lt;int&gt;(MyAlloc())</pre></blockquote>
