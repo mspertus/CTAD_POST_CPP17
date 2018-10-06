@@ -33,10 +33,9 @@ Audience: Evolution Working Group
 <h1>Filling holes in Class Template Argument Deduction</h1>
 This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>.
 <h2>Rationale</h2>
-As Timur Doumler has noted when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which always
-	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
+As Timur Doumler has noted when giving public presentations on using CTAD, there are a significant number of cases where CTAD cannot be used. This always deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
     We will show in this paper
-that these limitations can be safely removed. Note that some of these items were intentionally deferred to
+that these limitations can be safely removed. Note that some of these items were intentionally deferred from
     C++17 with the intent of adding them in C++20.  <p>The following example (which also includes
     notation from
     <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
@@ -108,8 +107,41 @@ Point p4 = f()[0];
 </pre></td>
     </table>
 
-In other words, deduction should take place simply from the arguments. Since it was voted in Rapperswil that aggregate
-    initialization proceed as if there was a synthesized constructor (does this apply to designated initializers and list-initialization?), we simply propose that the synthesized constructors have associated implicit deduction guides the same as other constructors do.
+In other words, deduction should take place simply from the arguments of a braced  or designated initializer during aggregate initialization. This can be accomplished by forming an additional deduction guide for aggregates.
+<h3>Algorithm</h3>
+<p>In the current Working Draft, an aggregate class is defined as a class with no user-declared or inherited constructors, no private or protected non-static data members, no virtual functions, and no virtual, private or protected base classes. Note that none of these properties can depend on a template parameter. Therefore we can always determine whether or not a class template would result in an aggregate class after instantiation, and generate the additional deduction guide if that is the case.
+
+
+<p>When <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0960r1.html">P0960R0</a> was discussed in Rapperswil, it was voted that in order to allow aggregate initialization from a parenthesized list of arguments, aggregate initialization should proceed as if there was a synthesized constructor. We can use the same approach to also synthesize the required additional deduction guide during class template argument
+    deduction as follows:
+
+<ol>
+    <li>Given a primary class template <tt>C</tt>, determine whether it satisfies all the conditions for an aggregate class ([dcl.init.aggr]/1.1 - 1.4).</li>
+    <li>If yes, let  <tt>T_1</tt>, ...., <tt>T_n</tt> denote the types of the <tt>N</tt> elements ([dcl.init.aggr]/2) of the aggregate (which may or may not depend on its template arguments).</li>
+    <li>Form a hypothetical constructor <tt>C(T_1, ..., T_N)</tt>. </li>
+    <li>For every constructor argument of type <tt>T_i</tt>, if all types <tt>T_i ... T_n</tt> are default-constructible, add a default argument value zero-initializing the argument as if by <tt>T_i = {}</tt>.</li>
+    <li>For the set of functions and function templates formed for [over.match.class.deduct], add an additional function template derived from this hypothetical constructor as described in [over.match.class.deduct]/1.</li>
+</ol>
+
+There is a slight complication resulting from subaggregates, and the fact that nested braces can be omitted when instantiating them:
+
+<blockquote><pre class="brush:cpp">
+struct Foo { int x, y; };
+struct Bar { Foo f; int z; };
+Bar bar{1, 2};   // Initializes bar.f.x and bar.f.y to 1; zero-initializes bar.z
+</pre></blockquote>
+
+In this case, we have two initializers, but they do not map to the two elements of the aggregate type <tt>Bar</tt>, instead initializing the sub-elements of the first subaggregate element of type <tt>Foo</tt>. 
+
+<p>For complicated nested aggregates, there are potentially many different combinations of valid mappings of initializers to subaggregate elements. It would be unpractical to create hypothetical constructors for all of those combinations. Additionally, whether or not an aggregate type has subaggregate elements may depend on the template arguments:
+
+<blockquote><pre class="brush:cpp">
+template &lt;typename T&gt;
+struct Bar { T f; int z; };  // T might be a subaggregate!
+</pre></blockquote>
+
+This information is not available during class template argument deduction, because for this we first need to deduce <tt>T</tt>, we therefore propose simply to avoid all of these problems by prohibiting the omission of nested braces when performing CTAD.
+
 
 <h2>Class Template Argument Deduction for alias templates</h2>
 While Class Template Argument Deduction makes type inferencing easier when constructing classes,
