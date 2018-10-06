@@ -34,7 +34,7 @@ Audience: Evolution Working Group
 This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>.
 <h2>Rationale</h2>
 As Timur Doumler has noted when giving public presentations on using CTAD, he has to end the presentations with a list of where CTAD cannot be used, which always
-	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, or inherited constructors or obey the normal rules for calling function templates.
+	deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
     We will show in this paper
 that these limitations can be safely removed. Note that any of these items were intentionally deferred to
     C++17 with the intent of adding them in C++20.  <p>The following example (which also includes
@@ -116,10 +116,11 @@ pmr::vector v2(cont.begin(), cont.end());</pre>
     this example is ill-formed by the normal rules of template argument deduction because
     <tt>pmr::memory_resource</tt> fails to 
     deduce <tt>pmr::polymorphic_allocator&lt;int&gt;</tt> in the  second argument. 
-    <p>While this is to be expected, one suspects that if Class Template Argument Deduction
-        for alias templates were around when <tt>pmr::vector</tt> was being designed,
-        we would have considered allowing such an inference as safe and useful in this context,
-        which could be done by indicating that the second parameter should be considered non-deducible:
+    <p>While this is to be expected, one suspects that had class template argument deduction
+        for alias templates been around when <tt>pmr::vector</tt> was being designed,
+        the committee would have considered allowing such an inference as safe and useful in this context.
+        If that was desired, it could easily have been achieved 
+        by indicating that the <code>pmr::allocator</code> template parameter should be considered non-deducible:
     <blockquote><pre class="brush:cpp">namespace pmr {
   template&lt;typename T&gt;
   using vector = std::vector&lt;T, identity_t&lt;pmr::polymorphic_allocator&lt;T&gt;&gt;&gt;; // See p0887R0 for identity_t
@@ -271,7 +272,7 @@ is tempting to deduce additional arguments just like <tt>make_tuple&lt;int&gt;(1
 <b>Note:</b>
 <blockquote>If at some point in the future it is desired to align more closely with function templates
 	by allowing additional variadic arguments to be deduced, it may become possible with other related language changes.
-	For example, right-hand side of a deduction guide could be a <em>type-id</em> instead of just
+	For example, if the right-hand side of a deduction guide could be a <em>type-id</em> instead of just
 	a <em>simple-template-id</em>, a  metafunction could compute the deduce different <tt>tuple</tt> types based on
 	whether the last argument is an allocator as well as unrelated use cases such as Richard Smith's delayed forwarding example
 	in P1021R0, but as there is absolutely no requirement that this be considered for C++20, so we do not pursue this
