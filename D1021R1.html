@@ -84,26 +84,21 @@ parameters would have allowed the above code to work just as expected.
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as one
 	shouldn't have to choose between having aggregates and deduction. This is well illustrated
-	by the following example, where <tt>v</tt> is a vector of (some specialization of) <tt>Point</tt> 
-	and <tt>f()</tt> returns a vector of (some specialization of) <tt>Point</tt>:
+	by the following example:
 <table border="1"><tr><th>C++17</th><th>Proposed</th></tr>
 <td><pre class="brush:cpp">template&lt;class T&gt;
-struct Point { T x; T y};
+struct Point { T x; T y;};
 
 // Aggregate: Cannot deduce
 Point&lt;double&gt; p{3.0, 4.0};
 Point&lt;double&gt; p2 {.x = 3.0, .y = 4.0};
-Point&lt;decltype(v[0].x)&gt; p3 = v[0];
-Point&lt;/*????*/&gt; p4 = f()[0];</pre>
-</td>    
+</pre></td>    
     <td><pre class="brush:cpp">template&lt;class T&gt;
 struct Point { T x; T y};
 
 // Proposed: Aggregates deduce
 Point p{3.0, 4.0};
 Point p2 {.x = 3.0, .y = 4.0};
-Point p3 = v[0];
-Point p4 = f()[0];
 </pre></td>
     </table>
 
@@ -140,7 +135,7 @@ template &lt;typename T&gt;
 struct Bar { T f; int z; };  // T might be a subaggregate!
 </pre></blockquote>
 
-This information is not available during class template argument deduction, because for this we first need to deduce <tt>T</tt>, we therefore propose simply to avoid all of these problems by prohibiting the omission of nested braces when performing CTAD.
+This information is not available during class template argument deduction, because for this we first need to deduce <tt>T</tt>. We therefore propose simply to avoid all of these problems by prohibiting the omission of nested braces when performing class template argument deduction.
 
 
 <h2>Class Template Argument Deduction for alias templates</h2>
