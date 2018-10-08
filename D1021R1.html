@@ -58,7 +58,7 @@ and used <tt>vector</tt> instead of <tt>pmr::vector</tt>.
 <p>
 To give a &ldquo;real-world&rdquo; example, Mateusz Pusz recently 
     approached us about his <a href="https://github.com/mpusz/units">Physical Units library</a>,
-    asking why code like the following in his library did not deduce as expected
+    asking whether code like the following in his library could be made to deduce as expected:
     <blockquote><pre class="brush:cpp">template&lt;Dimension D, Unit U, typename Rep&gt; class quantity;
 template&lt;Dimension D, Unit U, typename Rep&gt; quantity(Rep r) -> quantity&lt;D, U, Rep&gt;;
 
@@ -79,7 +79,7 @@ parameters would have allowed the above code to work just as expected.
     <a name="tf" href="#f">*</a> For an in-depth discussion on how
         terse constraints can benefit from improved inferencing without
         requiring named types provided by Class Template
-    Argument Deduction, see <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/D1168R0.html">D1168R0</a>
+    Argument Deduction, see <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/D1168R0.html">D1168R0</a>.
     <hr>
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as one
@@ -104,7 +104,14 @@ Point p2 {.x = 3.0, .y = 4.0};
 
 In other words, deduction should take place simply from the arguments of a braced  or designated initializer during aggregate initialization. This can be accomplished by forming an additional deduction guide for aggregates.
 <h3>Algorithm</h3>
-<p>In the current Working Draft, an aggregate class is defined as a class with no user-declared or inherited constructors, no private or protected non-static data members, no virtual functions, and no virtual, private or protected base classes. Note that none of these properties can depend on a template parameter. Therefore we can always determine whether or not a class template would result in an aggregate class after instantiation, and generate the additional deduction guide if that is the case.
+<p>In the current Working Draft, an aggregate class is defined as a class with no user-declared or inherited constructors, no private or protected non-static data members, no virtual functions, and no virtual, private or protected base classes. While we would like to generate an aggregate deduction guide for class templates 
+    that comply with these rules, we first need to consider the case where there is a dependent base
+    class that may have virtual functions, which would violate the rules for aggregates. Fortunately,
+    that case does not cause a problem because any deduction guides that require one or more arguments
+    will result in a compile-time error after instantiation, and non-aggregate classes without
+    user-declared or inherited constructors generate a zero-argument deduction guide anyway.
+    Based on the above, we can safely generate an aggregate deduction guide for class templates
+    that comply with aggregate rules.    
 
 
 <p>When <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0960r1.html">P0960R0</a> was discussed in Rapperswil, it was voted that in order to allow aggregate initialization from a parenthesized list of arguments, aggregate initialization should proceed as if there was a synthesized constructor. We can use the same approach to also synthesize the required additional deduction guide during class template argument
