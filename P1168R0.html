@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <style>
+/**
+ * SyntaxHighlighter
+ * http://alexgorbatchev.com/SyntaxHighlighter
+ *
+ * SyntaxHighlighter is donationware. If you are using it, please donate.
+ * http://alexgorbatchev.com/SyntaxHighlighter/donate.html
+ *
+ * @version
+ * 3.0.83 (July 02 2010)
+ * 
+ * @copyright
+ * Copyright (C) 2004-2010 Alex Gorbatchev.
+ *
+ * @license
+ * Dual licensed under the MIT and GPL licenses.
+ */
+.syntaxhighlighter {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt1 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt2 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.highlighted.alt1, .syntaxhighlighter .line.highlighted.alt2 {
+  background-color: #e0e0e0 !important;
+}
+.syntaxhighlighter .line.highlighted.number {
+  color: black !important;
+}
+.syntaxhighlighter table caption {
+  color: black !important;
+}
+.syntaxhighlighter .gutter {
+  color: #afafaf !important;
+}
+.syntaxhighlighter .gutter .line {
+  border-right: 3px solid #6ce26c !important;
+}
+.syntaxhighlighter .gutter .line.highlighted {
+  background-color: #6ce26c !important;
+  color: white !important;
+}
+.syntaxhighlighter.printing .line .content {
+  border: none !important;
+}
+.syntaxhighlighter.collapsed {
+  overflow: visible !important;
+}
+.syntaxhighlighter.collapsed .toolbar {
+  color: blue !important;
+  background: white !important;
+  border: 1px solid #6ce26c !important;
+}
+.syntaxhighlighter.collapsed .toolbar a {
+  color: blue !important;
+}
+.syntaxhighlighter.collapsed .toolbar a:hover {
+  color: red !important;
+}
+.syntaxhighlighter .toolbar {
+  color: white !important;
+  background: #6ce26c !important;
+  border: none !important;
+}
+.syntaxhighlighter .toolbar a {
+  color: white !important;
+}
+.syntaxhighlighter .toolbar a:hover {
+  color: black !important;
+}
+.syntaxhighlighter .plain, .syntaxhighlighter .plain a {
+  color: black !important;
+}
+.syntaxhighlighter .comments, .syntaxhighlighter .comments a {
+  color: #008200 !important;
+}
+.syntaxhighlighter .string, .syntaxhighlighter .string a {
+  color: blue !important;
+}
+.syntaxhighlighter .keyword {
+  color: #006699 !important;
+}
+.syntaxhighlighter .preprocessor {
+  color: gray !important;
+}
+.syntaxhighlighter .variable {
+  color: #aa7700 !important;
+}
+.syntaxhighlighter .value {
+  color: #009900 !important;
+}
+.syntaxhighlighter .functions {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .constants {
+  color: #0066cc !important;
+}
+.syntaxhighlighter .script {
+  font-weight: bold !important;
+  color: #006699 !important;
+  background-color: none !important;
+}
+.syntaxhighlighter .color1, .syntaxhighlighter .color1 a {
+  color: gray !important;
+}
+.syntaxhighlighter .color2, .syntaxhighlighter .color2 a {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .color3, .syntaxhighlighter .color3 a {
+  color: red !important;
+}
+
+.syntaxhighlighter .keyword {
+  font-weight: bold !important;
+}
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+body .syntaxhighlighter .line {
+    white-space: pre !important;
+}
+.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.clo,.opn,.pun{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.kwd,.tag,.typ{font-weight:700}.str{color:#060}.kwd{color:#006}.com{color:#600;font-style:italic}.typ{color:#404}.lit{color:#044}.clo,.opn,.pun{color:#440}.tag{color:#006}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+    </style>
+<title>How to make Terse Notation soar with Class Template Argument Deduction</title>
+</head>
+
+<body>
+<p>P1168R0<br>
+Mike Spertus, Symantec<br>
+<a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
+2018-10-08<br>
+Audience: Evolution Working Group
+</p>
+<h1>How to make Terse Notation soar with Class Template Argument Deduction</h1>
+Terse concept notation along the lines of <a href="http://wg21.link/p1141r1">P1141R1</a> has
+the potential to powerfully make generic programming look more like “regular
+programming”. As it is important for the initial release of concepts and terse notation to make
+a good first impression, this paper discusses how Class Template Argument
+Deduction can pitch in and help make the release of terse notation as successful as possible.
+as illustrated by the following example (note that <tt>Curve</tt> is a concept).
+<table border="1"><tbody><tr><th>C++17 + P1141R1</th><th>Proposed</th></tr>
+<tr><td>
+<div><div id="highlighter_706839" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">auto f(Curve auto &amp;c)</code></div><div class="line number2 index1 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">-&gt; pair&lt;decltype(c), pmr::vector&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(c.ctrl_pts)::value_type&gt;&gt;</code></div><div class="line number3 index2 alt2"><code class="cpp plain">{</code></div><div class="line number4 index3 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">Point&lt;decltype(c.x_min())&gt; top_left{c.x_min(), c.y_max()};</code></div><div class="line number5 index4 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">screen-&gt;line&lt;decltype(p.x)&gt;(p, {c.x_min(), c.y_max()});</code></div><div class="line number6 index5 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">pmr::vector&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(c.ctrl_pts)::value_type&gt; cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);</code></div><div class="line number7 index6 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">return</code> <code class="cpp plain">{c, cp };</code></div><div class="line number8 index7 alt1"><code class="cpp plain">};</code></div></div></td></tr></tbody></table></div></div></td>
+<td valign="top">
+<div><div id="highlighter_195225" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pair auto f(Curve auto &amp;c, basic_ostream auto logger)</code></div><div class="line number2 index1 alt1"><code class="cpp plain">{</code></div><div class="line number3 index2 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">Point top_left{c.x_min(), c.y_max()};</code></div><div class="line number4 index3 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">screen-&gt;line(top_left, {c.x_min(), c.y_max()});</code></div><div class="line number5 index4 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">pmr::vector cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);</code></div><div class="line number6 index5 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">return</code> <code class="cpp plain">{c, cp};</code></div><div class="line number7 index6 alt2"><code class="cpp plain">};</code></div></div></td></tr></tbody></table></div></div></td>
+</tr></tbody></table>
+What is going on here? Since function template arguments in
+terse notation often do not have named types, the easier
+it is to create new objects from existing objects without
+having to explicitly refer to their types, the more natural code
+will be. Since Class Template Argument Deduction
+provides inferenced creation of constrained objects
+just as concepts provide inferenced usage of constrained objects
+(thereby addressing complementary problems), it can really
+help in such situations as the above example shows. For a stunning
+    example of how much robust Class Template Argument Deduction can
+enhance concepts code, see the argument deduction <a href="#ex1">example</a>
+near the end of this paper.
+
+<p>While C++17 Class Template Argument Deduction can often be
+used in such situations (e.g., if the <tt>pmr::vector</tt> above
+had been an ordinary <tt>vector</tt>), the example above
+was crafted to illustrate the value of potential improvements
+to Class Template Argument Deduction, such as return type
+deduction below, and aggregate and type alias deduction. Such
+basic "filling of holes" would help a lot as illustrated in the
+example, and is covered in <a href="http://wg21.link/p1021r1">P1021R1</a> and 
+    <a href="http://wg21.link/p1167r0">P1167R0</a>. The remainder
+of this paper focuses specifically on aligning Class Template
+Argument Deduction Inferencing with Constrained Type Inferencing.
+
+</p><h2>The proposal</h2>
+Our proposal is simply that wherever P1141R1 allows a Concept-constrained
+<tt>auto</tt>, a class template can be used as well with the same
+	rules for independent resolution and forwarding references. Of course, 
+	if a different approach from P1141 is adopted for constrained declarations,
+	this proposal should follow that. Likewise, we do not take a position on where
+    <tt>auto</tt> should be required, simply that the same rules should apply to CTAD inferencing and concept inferencing to best maintain consistency between concepts and types. 
+	<p>Let	us look at some particular cases.</p>
+<h3>Ordinary declarations</h3>
+In P1141R1, it is mentioned that in
+<blockquote><div><div id="highlighter_484679" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">Constraint auto f1();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+it should be possible to omit the <tt>auto</tt> to get
+<blockquote><div><div id="highlighter_218538" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">Constraint f1();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+As justification, P1141R1 specifically refers to Class Template Argument Deduction allowing
+
+<blockquote><div><div id="highlighter_69112" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">std::tuple x = foo();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+By the same reasoning, it makes sense for us to be consistent in the other
+direction and allow
+
+<blockquote><div><div id="highlighter_92162" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">std::tuple auto x = foo();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+Otherwise, the programmer has to remember a bunch of special-cased
+rules as to which kinds of deduced declarations can accept an <tt>auto</tt>
+or not.
+<h3>Return type deduction</h3>
+Likewise, just like one can say
+<blockquote><div><div id="highlighter_997911" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">Constraint auto f1();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+one should also be able to say
+<blockquote><div><div id="highlighter_695804" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">tuple auto f1();</code></div></div></td></tr></tbody></table></div></div></blockquote>
+to make explicit that constrained type deduction is taking place (In
+	this context, we are using the phrase “constrained type
+	deduction” to refer to the fact that the deduced type
+	is given more specifically than just a lone <tt>auto</tt>).
+	The example given at the top of this paper of <tt>f</tt>
+	returning
+	<blockquote><div><div id="highlighter_411573" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pair auto</code></div></div></td></tr></tbody></table></div></div></blockquote>
+instead of
+	<blockquote><div><div id="highlighter_575152" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pair&lt;decltype(c), pmr::vector&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(c.ctrl_pts)::value_type&gt;&gt;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+
+	illustrates just how much this can simplify code.
+<p>Notes:</p>
+	<ul><li>As with normal return type deduction, the function needs to have 
+		a <tt>return</tt> statement, and all <tt>return</tt> statements must 
+		generate the same type. In <a href="http://wg21.link/p1021r0">P1021R0</a>, it was proposed that the <tt>return</tt> statements could have different types, but
+		this is  no longer proposed after feedback from compiler vendors.</li>
+		<li>This proposal also follows the principal that returning a value should behave like initialization:
+		<blockquote><div><div id="highlighter_636080" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">tuple t = {1, </code><code class="cpp string">"foo"</code><code class="cpp plain">};</code></div><div class="line number2 index1 alt1"><code class="cpp plain">tuple auto g() { </code><code class="cpp keyword bold">return</code> <code class="cpp plain">{1, </code><code class="cpp string">"foo"</code><code class="cpp plain">}; }</code></div></div></td></tr></tbody></table></div></div></blockquote></li></ul>
+<h3>Argument deduction</h3>
+As P1141R0 allows us to say
+<blockquote><div><div id="highlighter_559265" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">void</code> <code class="cpp plain">f1(Constraint auto x);</code></div></div></td></tr></tbody></table></div></div></blockquote>
+one should also be able to indicate that a declaration has its arguments
+	deduced by
+	<blockquote><div><div id="highlighter_242273" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">void</code> <code class="cpp plain">f1(tuple auto x);</code></div></div></td></tr></tbody></table></div></div></blockquote>
+
+This is not only more consistent, but we think it can have a huge impact on facilitating
+terse notation as now almost any function template could be written using natural function notation as
+shown by the following example (which also demonstrates the value of partially-specialized
+	template argument lists as proposed in P1021R0)
+extension
+<a name="ex1"></a><table border="1"><tbody><tr><th>C++17 + P1141R1</th><th>Proposed</th></tr>
+<tr><td>
+<div><div id="highlighter_86104" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp comments">// We need an explicit template here because of confusing mix of both class template and concept arguments</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">CharT, </code><code class="cpp keyword bold">class</code> <code class="cpp plain">Traits&gt;</code></div><div class="line number3 index2 alt2"><code class="cpp plain">auto f(Curve auto &amp;c, basic_ostream&lt;charT, Traits&gt; logger)</code></div><div class="line number4 index3 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">-&gt; pair&lt;decltype(c), pmr::vector&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(c.ctrl_pts)::value_type&gt;&gt;</code></div><div class="line number5 index4 alt2"><code class="cpp plain">{</code></div><div class="line number6 index5 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">Point&lt;decltype(c.x_min())&gt; top_left{c.x_min(), c.y_max()};</code></div><div class="line number7 index6 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">screen-&gt;line&lt;decltype(p.x)&gt;(p, {c.x_min(), c.y_max()});</code></div><div class="line number8 index7 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">logger &lt;&lt; </code><code class="cpp string">"Drew line\n"</code><code class="cpp plain">;</code></div><div class="line number9 index8 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code>&nbsp;</div><div class="line number10 index9 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">pmr::vector&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(c.ctrl_pts)::value_type&gt; cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);</code></div><div class="line number11 index10 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">logger &lt;&lt; </code><code class="cpp string">"Got control points: "</code><code class="cpp plain">;</code></div><div class="line number12 index11 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp comments">// Hard to specify ostream_iterator template args</code></div><div class="line number13 index12 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">copy(cp.begin(), cp.end(), </code></div><div class="line number14 index13 alt1"><code class="cpp spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="cpp plain">ostream_iterator&lt;decltype(cp[0]),</code></div><div class="line number15 index14 alt2"><code class="cpp spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(logger)::char_type,</code></div><div class="line number16 index15 alt1"><code class="cpp spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">decltype(logger)::traits_type&gt;(logger, </code><code class="cpp string">", "</code><code class="cpp plain">));</code></div><div class="line number17 index16 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">return</code> <code class="cpp plain">{c, cp };</code></div><div class="line number18 index17 alt1"><code class="cpp plain">};</code></div></div></td></tr></tbody></table></div></div></td>
+<td valign="top">
+<div><div id="highlighter_74544" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp comments">// “auto” constraints consistently indicate which arguments are deduced</code></div><div class="line number2 index1 alt1"><code class="cpp plain">pair auto f(Curve auto &amp;c, basic_ostream auto logger)</code></div><div class="line number3 index2 alt2"><code class="cpp plain">{</code></div><div class="line number4 index3 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">Point auto top_left{c.x_min(), c.y_max()};</code></div><div class="line number5 index4 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">screen-&gt;line(top_left, {c.x_min(), c.y_max()});</code></div><div class="line number6 index5 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">logger &lt;&lt; </code><code class="cpp string">"Drew line\n"</code><code class="cpp plain">;</code></div><div class="line number7 index6 alt2">&nbsp;</div><div class="line number8 index7 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">pmr::vector cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);</code></div><div class="line number9 index8 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">logger &lt;&lt; </code><code class="cpp string">"Got control points: "</code><code class="cpp plain">;</code></div><div class="line number10 index9 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp comments">// See P1021R1 for partially-specializing ostream_iterator</code></div><div class="line number11 index10 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">copy(cp.begin(), cp.end(), </code></div><div class="line number12 index11 alt1"><code class="cpp spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="cpp plain">ostream_iterator&lt;decltype(cp[0])&gt;(logger, </code><code class="cpp string">", "</code><code class="cpp plain">));</code></div><div class="line number13 index12 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">return</code> <code class="cpp plain">{c, cp};</code></div><div class="line number14 index13 alt1"><code class="cpp plain">};</code></div></div></td></tr></tbody></table></div></div></td>
+</tr></tbody></table>
+We think things like the above example will be very common, and, 
+    without this proposal, terse notation will not be applicable to 
+    many function templates.
+    
+<h3>Specialization</h3>
+As Zhihao Yuan notes, the partially template argument list support proposed in
+P1167R0 naturally supports the useful alignment
+<blockquote><div><div id="highlighter_799214" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">tuple&lt;Copyable&gt; t(1);</code></div></div></td></tr></tbody></table></div></div></blockquote>
+<!-- Notes:
+  Should pair<Regular, vector> work as the return type? -->
+<!-- <h2>Futures</h2>
+The proposals in this paper not only immediately increase consistency, but
+	they fit nicely with possible future evolution
+<h3>Concept base-class flexibility</h3>
+<h3>Deduction guides for concepts</h3>
+	While it was pointed out above that during object creation an
+actual type, rather than just its requirements, needs to be
+provided, that need not be true.-->
+
+</body></html>

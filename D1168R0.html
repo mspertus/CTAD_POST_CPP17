@@ -15,23 +15,24 @@ body .syntaxhighlighter .line {
 }
 
     </style>
-<title>How to make Terse Notation better with Class Template Argument Deduction</title>
+<title>How to make Terse Notation soar with Class Template Argument Deduction</title>
 </head>
 
 <body>
-<p>D1168R0<br>
+<p>P1168R0<br>
 Mike Spertus, Symantec<br>
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
-2018-??-??<br>
+2018-10-08<br>
 Audience: Evolution Working Group
 </p>
-<h1>How to make Terse Notation better with Class Template Argument Deduction</h1>
-Terse concept notation along the lines of <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a> has
+<h1>How to make Terse Notation soar with Class Template Argument Deduction</h1>
+Terse concept notation along the lines of <a href="http://wg21.link/p1141r1">P1141R1</a> has
 the potential to powerfully make generic programming look more like &ldquo;regular
-programming&rdquo;. This paper discusses how Class Template Argument
-Deduction can help make the release of terse notation as successful as
+programming&rdquo;. As it is important for the initial release of concepts and terse notation to make
+a good first impression, this paper discusses how Class Template Argument
+Deduction can pitch in and help make the release of terse notation as successful as possible.
 as illustrated by the following example (note that <tt>Curve</tt> is a concept).
-<table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
+<table border="1"><tr><th>C++17 + P1141R1</th><th>Proposed</th></tr>
 <tr><td>
 <pre class="brush:cpp">auto f(Curve auto &amp;c)
   -&gt; pair&lt;decltype(c), pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt;&gt;
@@ -58,7 +59,10 @@ will be. Since Class Template Argument Deduction
 provides inferenced creation of constrained objects
 just as concepts provide inferenced usage of constrained objects
 (thereby addressing complementary problems), it can really
-help in such situations as the above example shows.
+help in such situations as the above example shows. For a stunning
+    example of how much robust Class Template Argument Deduction can
+enhance concepts code, see the argument deduction <a href="#ex1">example</a>
+near the end of this paper.
 
 <p>While C++17 Class Template Argument Deduction can often be
 used in such situations (e.g., if the <tt>pmr::vector</tt> above
@@ -67,24 +71,25 @@ was crafted to illustrate the value of potential improvements
 to Class Template Argument Deduction, such as return type
 deduction below, and aggregate and type alias deduction. Such
 basic "filling of holes" would help a lot as illustrated in the
-example, and is covered in D1021R1 and D1168R0. The remainder
+example, and is covered in <a href="http://wg21.link/p1021r1">P1021R1</a> and 
+    <a href="http://wg21.link/p1167r0">P116R0</a>. The remainder
 of this paper focuses specifically on aligning Class Template
 Argument Deduction Inferencing with Constrained Type Inferencing.
 
 <h2>The proposal</h2>
-Our proposal is simply that wherever P1141R0 allows a Concept-constrained
+Our proposal is simply that wherever P1141R1 allows a Concept-constrained
 <tt>auto</tt>, a class template can be used as well with the same
 	rules for independent resolution and forwarding references. Of course, 
 	if a different approach from P1141 is adopted for constrained declarations,
-	this proposal should follow that. Likewise, note that we do not take a position on where
+	this proposal should follow that. Likewise, we do not take a position on where
     <tt>auto</tt> should be required, simply that the same rules should apply to CTAD inferencing and concept inferencing to best maintain consistency between concepts and types. 
 	<p>Let	us look at some particular cases.</p>
 <h3>Ordinary declarations</h3>
-In P1141R0, it is mentioned that in
+In P1141R1, it is mentioned that in
 <blockquote><pre class="brush:cpp">Constraint auto f1();</pre></blockquote>
 it should be possible to omit the <tt>auto</tt> to get
 <blockquote><pre class="brush:cpp">Constraint f1();</pre></blockquote>
-As justification, P1141R0 specifically refers to Class Template Argument Deduction allowing
+As justification, P1141R1 specifically refers to Class Template Argument Deduction allowing
 
 <blockquote><pre class="brush:cpp">std::tuple x = foo();</pre></blockquote>
 By the same reasoning, it makes sense for us to be consistent in the other
@@ -113,7 +118,7 @@ instead of
 <p>Notes:</p>
 	<ul><li>As with normal return type deduction, the function needs to have 
 		a <tt>return</tt> statement, and all <tt>return</tt> statements must 
-		generate the same type. In P1021R0, it was proposed that the <tt>return</tt> statements could have different types, but
+		generate the same type. In <a href="http://wg21.link/p1021r0">P1021R0</a>, it was proposed that the <tt>return</tt> statements could have different types, but
 		this is  no longer proposed after feedback from compiler vendors.</li>
 		<li>This proposal also follows the principal that returning a value should behave like initialization:
 		<blockquote><pre class="brush:cpp">tuple t = {1, "foo"};
@@ -130,7 +135,7 @@ terse notation as now almost any function template could be written using natura
 shown by the following example (which also demonstrates the value of partially-specialized
 	template argument lists as proposed in P1021R0)
 extension
-<table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
+<a name="ex1"></a><table border="1"><tr><th>C++17 + P1141R1</th><th>Proposed</th></tr>
 <tr><td>
 <pre class="brush:cpp">// We need an explicit template here because of confusing mix of both class template and concept arguments
 template&lt;class CharT, class Traits&gt;
@@ -160,7 +165,7 @@ pair auto f(Curve auto &amp;c, basic_ostream auto logger)
 
   pmr::vector cp(c.ctrl_pts.begin(), c.ctrl_pts.end(), mem_res);
   logger &lt;&lt; "Got control points: ";
-  // See D1021R1 for partially-specializing ostream_iterator
+  // See P1021R1 for partially-specializing ostream_iterator
   copy(cp.begin(), cp.end(), 
        ostream_iterator&lt;decltype(cp[0])&gt;(logger, ", "));
   return {c, cp};
@@ -171,8 +176,8 @@ We think things like the above example will be very common, and,
     many function templates.
     
 <h3>Specialization</h3>
-As Zhihao Yuan notes, the partially-specialized template argument list support proposed in
-D1168R0 naturally supports the useful alignment
+As Zhihao Yuan notes, the partially template argument list support proposed in
+P1167R0 naturally supports the useful alignment
 <blockquote><pre class="brush:cpp">tuple&lt;Copyable&gt; t(1);</pre></blockquote>
 <!-- Notes:
   Should pair<Regular, vector> work as the return type? -->
