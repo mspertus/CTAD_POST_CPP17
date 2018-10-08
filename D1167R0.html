@@ -132,7 +132,9 @@ is a more complex partial specialization of a class template than in the example
 <blockquote><pre class="brush:cpp">template&lt;typename T&gt; void f(pair&lt;int, T&gt;);</pre></blockquote>
 In such a case, we deduce the <tt>pair&lt;int, T&gt;</tt> by following the same process
 as used for alias templates in <a href="http://wg21.link/p1021r1">P1021R1</a>, thereby
-deducing <tt>T</tt>. For the technical details, see P1021R1, which has a step-by-step walkthrough
+deducing <tt>T</tt>. For example, <tt>f({{}, 2L})</tt> will deduce <tt>f&lt;long&gt;</tt>,
+    which takes a <tt>pair&lt;int, long&gt;</tt> as an argument.
+    For the technical details, see P1021R1, which has a step-by-step walkthrough
 for deducing <tt>pair&lt;int, T&gt;</tt>.
 <h2>Deduction guides for function templates</h2>
 <p>While Class Template Argument Deduction uses both implicit and explicit deduction guides, 
