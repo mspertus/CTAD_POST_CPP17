@@ -27,7 +27,7 @@ Timur Doumler<br>
 <a href="mailto:papers@timur.audio">papers@timur.audio</a><br>
 Richard Smith<br>
 <a href="mailto:richardsmith@google.com">richardsmith@google.com</a><br>
-2018-??-??<br>
+2018-10-07<br>
 Audience: Evolution Working Group
 </p>
 <h1>Filling holes in Class Template Argument Deduction</h1>
@@ -38,10 +38,10 @@ As Timur Doumler has noted when giving public presentations on using CTAD, there
 that these limitations can be safely removed. Note that some of these items were intentionally deferred from
     C++17 with the intent of adding them in C++20.  <p>The following example (which also includes
     notation from
-    <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r0.html">P1141R0</a>
+    <a href="http://wg21.link/p1141r1">P1141R1</a>
     <a href="#tf" name="f">*</a>) gives an idea of how much filling holes can smooth the road. 
 
-<table border="1"><tr><th>C++17 + P1141R0</th><th>Proposed</th></tr>
+<table border="1"><tr><th>C++17 + P1141R1</th><th>Proposed</th></tr>
 <tr><td><pre class="brush:cpp">void f(Curve auto c) {
   Point&lt;decltype(c.x_min())&gt; top_left{c.x_min(), c.y_max()};
   pmr::vector&lt;typename decltype(c.ctrl_pts)::value_type&gt; v(c.ctrl_pts.begin(), c.ctr_pts.end());
@@ -79,7 +79,7 @@ parameters would have allowed the above code to work just as expected.
     <a name="tf" href="#f">*</a> For an in-depth discussion on how
         terse constraints can benefit from improved inferencing without
         requiring named types provided by Class Template
-    Argument Deduction, see <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/D1168R0.html">D1168R0</a>.
+    Argument Deduction, see <a href="http://wg21.link/p1168r0">P1168R0</a>.
     <hr>
 <h2>Class Template Argument Deduction for aggregates</h2>
 We propose that Class Template Argument Deduction works for aggregate initialization as one
@@ -299,14 +299,14 @@ As far back as C++98, this creates a <tt>vector&lt;int, allocator&lt;int&gt;&gt;
 	
 	This maintains the behavior of legacy C++ for classes that 
         were designed before Class Template Argument Deduction was introduced, while at the same time allowing
-	important examples like the above to be handled correctly (assuming <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/P1069R0.html">P1069R0</a>, which we believe is certainly desirable. Of course, once a class has
+	important examples like the above to be handled correctly (assuming <a href="https://wg21.link/p1069r0">P1069R0</a>, which we believe is certainly desirable. Of course, once a class has
 	deduction guides, nearly any desired behavior can be specified, so other examples should be handleable as needed.<p>
  <b>Notes:</b><ul><li>As this rule is only relevant for template parameters with default initializers. For class template
 	parameters without default initializers, the programmer can ignore it.</li>
 	<li>Without this rule, no combination of traditional deduction guides could produce this behavior, severely
 	limiting the ability to use deduction guides to customize class behavior.</li>
 	<li>If  deduction guides are ever supported for function templates in addition to class templates as 
-		proposed in <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/blob/master/D1168R0.html">D1168R0</a>,
+		proposed in <a href="http://wg21.link/p1168r0">P1168R0</a>,
 	having deduction guides follow the usual rules for function template argument deduction in which inference overrides default values
 		seems clearly the right approach. This proposal will be consistent with that.</li></ul>
 <h4>Variadic arguments</h4>
