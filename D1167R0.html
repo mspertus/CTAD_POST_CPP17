@@ -22,7 +22,7 @@ body .syntaxhighlighter .line {
 <p>D1167R0<br>
 Mike Spertus, Symantec<br>
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
-2018-05-07<br>
+2018-10-08<br>
 Audience: Evolution Working Group
 </p>
 <h1>Improving function templates with Class Template Argument Deduction</h1>
@@ -50,7 +50,7 @@ template&lt;class charT, class traits, class Allocator&gt;
 T14 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
            charT delim = charT('"'), charT escape = charT('\\'));</pre></td>
 <td valign="top"><pre class="brush:cpp">
-// Example 1: CTAD deduces s argument as in ordinary declarations
+// Example 1: Allow CTAD to deduce function template arguments
 template&lt;class charT, class traits, class Allocator&gt;
 T1 quoted(basic_string_view&lt;charT, traits, Allocator&gt;&amp; s,
     charT delim = charT('"'), charT escape = charT('\\'));</pre></td>
@@ -127,7 +127,13 @@ template&lt;class T&gt; void f(optional&lt;T&gt;); </pre></td></tr>
 <tr><td><pre class="brush:cpp">f&lt;int&gt;(7); // Do I really need to do this?</pre></td>
 <td><pre class="brush:cpp">f(7); // Proposed: No!</pre></td>
 </tr></table>
-<h3>Wording</h3>
+One technical point deserves mention here. It may be that the function template parameter
+is a more complex partial specialization of a class template than in the example above. For example,
+<blockquote><pre class="brush:cpp">template&lt;typename T&gt; void f(pair&lt;int, T&gt;);</pre></blockquote>
+In such a case, we deduce the <tt>pair&lt;int, T&gt;</tt> by following the same process
+as used for alias templates in <a href="http://wg21.link/p1021r1">P1021R1</a>, thereby
+deducing <tt>T</tt>. For the technical details, see P1021R1, which has a step-by-step walkthrough
+for deducing <tt>pair&lt;int, T&gt;</tt>.
 <h2>Deduction guides for function templates</h2>
 <p>While Class Template Argument Deduction uses both implicit and explicit deduction guides, 
 Function Template Argument Deduction in effect uses only implicit guides (ordinary Function
@@ -183,7 +189,6 @@ to optionally specify which of an overloaded function template they were guiding
 both due to complexity and the absence of compelling use cases. This can
 always be added later if it proves worthwhile. Indeed, class template constructors
 also form an overload set, and such a feature has not proved necessary for Class Template Argument Deduction.
-<h3>Wording</h3>
 <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
