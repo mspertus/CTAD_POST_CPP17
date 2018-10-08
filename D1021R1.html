@@ -33,7 +33,7 @@ Audience: Evolution Working Group
 <h1>Filling holes in Class Template Argument Deduction</h1>
 This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>.
 <h2>Rationale</h2>
-As one of us (Timur Doumler) has noted when giving public presentations on using class template argument deduction, there are a significant number of cases where it cannot be used. This always deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
+As one of us (Timur) has noted when giving public presentations on using class template argument deduction, there are a significant number of cases where it cannot be used. This always deflates the positive feelings from the rest of the talk because it is accurately regarded as artificially inconsistent. In particular, listeners are invariably surprised that it does not work with aggregate templates, type aliases, inherited constructors, or obey normal rules for calling function templates.
     We will show in this paper
 that these limitations can be safely removed. Note that some of these items were intentionally deferred from
     C++17 with the intent of adding them in C++20.  <p>The following example (which also includes
@@ -209,7 +209,7 @@ Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> f
 Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
 <blockquote><pre class="brush:cpp">template&lt;class T&gt; P(int, T) -&gt; P&lt;T&gt;;</pre></blockquote>
 A repository of additional expository materials and worked out examples used in the refinement of this algorithm 
-    is maintained <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
+    is maintained <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
 <h2>Deducing from inherited constructors</h2>
 In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
 	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>, you should &ldquo;use inheriting constructors to import constructors into a derived class that does not need further explicit initialization&rdquo;. As the creator of such a thin wrapper has not asked in any way for the derived class to behave differently under construction, our experience is that users are
