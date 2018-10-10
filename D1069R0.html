@@ -183,8 +183,8 @@ int main()
                 const charT* s, size_type n2) const;
   };
   
-<span class="ins">template&lt;class T, class Allocator&gt;
-basic_string(Allocator) -&gt; basic_string&lt;T, char_traits&lt;T&gt;, Allocator&gt;;
+<span class="ins">template&lt;class T, class Traits = char_traits&lt;T&gt;, class Allocator&gt;
+basic_string(Allocator) -&gt; basic_string&lt;T, Traits, Allocator&gt;;
 </span></pre></blockquote>
 In &sect;24.3.2.2 [string.cons], insert the following:
 <blockquote><pre><span class="ins">template&lt;class T, class Allocator&gt;
@@ -198,10 +198,9 @@ At the end of the definition of class <tt>deque</tt> in &sect;26.3.8.1 [deque.ov
 };
 
 <span class="ins">template&lt;class T, class Allocator&gt; 
-  deque(Allocator) -&gt; deque&lt;T, Allocator&gt;;
+explicit deque(Allocator) -&gt; deque&lt;T, Allocator&gt;;
   
-template&lt;class T, class Allocator&gt; 
-  deque(size_t, Allocator) -&gt; deque&lt;T, Allocator&gt;;</span></pre></blockquote>
+template&lt;class T, class Allocator&gt; explicit deque(size_t, Allocator) -&gt; deque&lt;T, Allocator&gt;;</span></pre></blockquote>
     
     
 At the end of the definition of class <tt>forward_list</tt> in &sect;26.3.9.1 [forwardlist.overview],
@@ -210,10 +209,10 @@ add the following deduction guides:
   };
   
 <span class="ins">  template&lt;class T, class Allocator&gt;
-  forward_list(Allocator) -&gt; forward_list&lt;T, Allocator&gt;;
+  explicit forward_list(Allocator) -&gt; forward_list&lt;T, Allocator&gt;;
   
-  template&lt;class Allocator&gt; 
-  forward_list(size_t, Allocator) -&gt; forward_list&lt;T, Allocator&gt;;</span></pre></blockquote>
+  template&lt;class T, class Allocator&gt; 
+  explicit forward_list(size_t, Allocator) -&gt; forward_list&lt;T, Allocator&gt;;</span></pre></blockquote>
     
 At the end of the definition of class <tt>list</tt> in &sect;26.3.10.1 [list.overview],
 add the following deduction guides:
@@ -221,21 +220,21 @@ add the following deduction guides:
   };
   
 <span class="ins">  template&lt;class T, class Allocator&gt;
-  list(Allocator) -&gt; list&lt;T, Allocator&gt;;
+  explicit list(Allocator) -&gt; list&lt;T, Allocator&gt;;
   
   template&lt;class T, class Allocator&gt; 
-  list(size_t, Allocator) -&gt; list&lt;T, Allocator&gt;;</span></pre></blockquote>
-    
+  explicit list(size_t, Allocator) -&gt; list&lt;T, Allocator&gt;;</span></pre></blockquote>
+
 At the end of the definition of class <tt>vector</tt> in &sect;26.3.11.1 [vector.overview],
 add the following <em>deduction-guide</em>:
 <blockquote><pre>    void clear() noexcept;
   };
   
 <span class="ins">  template&lt;class T, class Allocator&gt;
-  vector(Allocator) -&gt; vector&lt;T, Allocator&gt;;
+  explicit  vector(Allocator) -&gt; vector&lt;T, Allocator&gt;;
   
-  template&lt;class Allocator&gt; 
-  vector(size_t, Allocator)
+  template&lt;class T, class Allocator&gt; 
+  explicit  vector(size_t, Allocator)
     -&gt; vector&lt;T, Allocator&gt;;</span></pre></blockquote>
 
    
@@ -245,14 +244,13 @@ add the following deduction guides:
 <blockquote><pre>    pair&lt;const_iterator, const_iterator&gt; equal_range(const K&amp; x) const;
   };
   
-<span class="ins">  template&lt;class Key, class T, class Compare, class Allocator&gt;  
-  map(Compare, Allocator)
+<span class="ins">  template&lt;class Key, class T, class Compare, class Allocator = allocator&lt;pair&lt;Key, T&gt;&gt;&gt;  
+  explicit map(Compare, Allocator = Allocator())
     -&gt; map&lt;Key, T, Compare, Allocator&gt;;</span> 
       
-<span class="ins">  template&lt;class Allocator&gt;
-  map(Allocator)
-    -&gt; map&lt;class Key, class T&gt;,
-      less&lt;Key&gt;&gt;, Allocator&gt;;</span></pre></blockquote>  
+<span class="ins">  template&lt;class Key, class T, class Compare = less&lt;Key&gt;, class Allocator&gt;
+  explicit map(Allocator)
+    -&gt; map&lt;Key, T, Compare, Allocator&gt;;</span></pre></blockquote>  
 
     
 At the end of the definition of class <tt>multimap</tt> in &sect;26.4.5.1 [multimap.overview],
@@ -261,14 +259,13 @@ add the following deduction guides:
 <blockquote><pre>    pair&lt;const_iterator, const_iterator&gt; equal_range(const K&amp; x) const;
   };
   
-<span class="ins">  template&lt;class Key, class T, class Compare, class Allocator&gt;  
-  multimap(Compare, Allocator)
+<span class="ins">  template&lt;class Key, class T, class Compare, class Allocator = allocator&lt;pair&lt;Key, T&gt;&gt;&gt;  
+  explicit multimap(Compare, Allocator = Allocator())
     -&gt; multimap&lt;Key, T, Compare, Allocator&gt;;</span> 
       
-<span class="ins">  template&lt;class Key, class T, class Allocator&gt;
-  multimap(Allocator)
-    -&gt; multimap&lt;Key, T,
-      Key, Allocator&gt;;</span></pre></blockquote>  
+<span class="ins">  template&lt;class Key, class T, class Compare = less&lt;Key&gt;, class Allocator&gt;
+  explicit multimap(Allocator)
+    -&gt; multimap&lt;Key, T, Compare, Allocator&gt;;</span></pre></blockquote>  
 
 At the end of the definition of class <tt>set</tt> in &sect;26.4.6.1 [set.overview],
 add the following <em>deduction-guide</em>s:
@@ -276,14 +273,14 @@ add the following <em>deduction-guide</em>s:
       pair&lt;const_iterator, const_iterator&gt; equal_range(const K&amp; x) const;
   };
   
-<span class="ins">  template&lt;klass T, class Compare, class Allocator&gt;
-  set(Compare, Allocator)
+<span class="ins">  template&lt;class T, class Compare, class Allocator&gt;
+  explicit set(Compare, Allocator = allocator&lt;T&gt;)
     -&gt; set&lt;T, Compare, Allocator&gt;;</span>
 
   
-<span class="ins">  template&lt;class Allocator&gt;
-  set(Allocator)
-    -&gt; set&lt;T, less&lt;T&gt;, Allocator&gt;;</span></pre></blockquote>
+<span class="ins">  template&lt;class T, class Compare = less&lt;T&gt;, class Allocator&gt;
+  explicit set(Allocator)
+    -&gt; set&lt;T, Compare, Allocator&gt;;</span></pre></blockquote>
     
 At the end of the definition of class <tt>multiset</tt> in &sect;27.4.6.1 [multiset.overview],
 add the following deduction guides:
@@ -292,13 +289,13 @@ add the following deduction guides:
   };
   
 <span class="ins">  template&lt;class T, class Compare, class Allocator&gt;
-  multiset(Compare, Allocator)
+  explicit multiset(Compare, Allocator = allocator&lt;T&gt;)
     -&gt; multiset&lt;T, Compare, Allocator&gt;;</span>
 
   
-<span class="ins">  template&lt;class T, class Allocator&gt;
-  multiset(Allocator)
-    -&gt; multiset&lt;T, less&lt;T&gt;, Allocator&gt;;</span></pre></blockquote>
+<span class="ins">  template&lt;class T, class Compare = less&lt;T&gt;, class Allocator&gt;
+  explicit multiset(Allocator)
+    -&gt; multiset&lt;T, Compare, Allocator&gt;;</span></pre></blockquote>
     
 
 Modify &sect;26.5.4.1 [unord.map.overview],
@@ -306,57 +303,51 @@ add the following <em>deduction-guide</em>s:
 <blockquote><pre>    void reserve(size_type n);
   };
   
-<span class="ins">  template&lt;class Key, class T, class Hash, class Pred, class Allocator&gt;
-  unordered_map(size_t, Hash, Pred, Allocator)
-      -&gt; unordered_map&lt;Key, T,
-              Hash, Pred, Allocator&gt;;</span>
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_map(size_t, Hash, Pred = Pred(), Allocator = Allocator())
+      -&gt; unordered_map&lt;Key, T, Hash, Pred, Allocator&gt;;</span>
       
-<span class="ins">  template&lt;class Key, class Tclass Allocator&gt;
-  unordered_map(Allocator)
-    -&gt; unordered_map&lt;Key, T,
-	          hash&lt;alloc_key_T&gt;, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;</span>
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_map(Allocator)
+    -&gt; unordered_map&lt;Key, T, Hash, Pred, Allocator&gt;;</span>
 
 
-<span class="ins">  template&lt;class Key, class T, class Allocator&gt;
-  unordered_map(size_t, Allocator)
-      -&gt; unordered_map&lt;Key, T,
-              hash&lt;alloc_key_T&gt;, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_map(size_t, Allocator)
+      -&gt; unordered_map&lt;Key, T, Hash, Pred, Allocator&gt;;
    
-  template&lt;class Key, class T, class Hash, class Allocator&gt;
-  unordered_map(size_t, Hash, Allocator)
+  template&lt;class Key, class T, class Hash, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_map(size_t, Hash, Allocator)
     -&gt; unordered_map&lt;Key, T,
-	        Hash, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;</span>
+	        Hash, Pred, Allocator&gt;;</span></pre></blockquote>
 
     
 Delete &sect;26.5.4.1p4 [unord.map.overview]:
 <blockquote><span class="del">A <tt>size_type</tt> parameter type in an <tt>unordered_map</tt> deduction 
     guide refers to the <tt>size_type</tt> member type of the type deduced by the deduction guide.</span></blockquote>
 
-Modify &sect;26.5.5.1 [unord.map.overview],
+Modify &sect;26.5.5.1 [unord.multimap.overview],
 add the following <em>deduction-guide</em>s:
 <blockquote><pre>    void reserve(size_type n);
   };
   
-<span class="ins">  template&lt;class Key, class T, class Hash, class Pred, class Allocator&gt;
-  unordered_multimap(size_t, Hash, Pred, Allocator)
-      -&gt; unordered_multimap&lt;Key, T,
-              Hash, Pred, Allocator&gt;;</span>
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_multimap(size_t, Hash, Pred = Pred(), Allocator = Allocator())
+      -&gt; unordered_multimap&lt;Key, T, Hash, Pred, Allocator&gt;;</span>
+      
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_multimap(Allocator)
+    -&gt; unordered_multimap&lt;Key, T, Hash, Pred, Allocator&gt;;</span>
 
-<span class="ins">  template&lt;class Key, class T, class Allocator&gt;
-  unordered_multimap(Allocator)
+
+<span class="ins">  template&lt;class Key, class T, class Hash = hash&lt;Key&gt;, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_multimap(size_t, Allocator)
+      -&gt; unordered_multimap&lt;Key, T, Hash, Pred, Allocator&gt;;
+
+  template&lt;class Key, class T, class Hash, class Pred = equal_to&lt;Key&gt;, class Allocator&gt;
+  explicit unordered_multimap(size_t, Hash, Allocator)
     -&gt; unordered_multimap&lt;Key, T,
-	          hash&lt;alloc_key_T&gt;, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;</span>
-
-
-<span class="ins">  template&lt;class Key, class T, class Allocator&gt;
-  unordered_multimap(size_t, Allocator)
-      -&gt; unordered_multimap&lt;Key, T,
-              hash&lt;alloc_key_T&gt;, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;
-   
-  template&lt;class Key, class T, class Hash, class Allocator&gt;
-  unordered_multimap(size_t, Hash, Allocator)
-    -&gt; unordered_multimap&lt;Key, T,
-	        Hash, equal_to&lt;alloc_key_T&gt;, Allocator&gt;;</span>
+	        Hash, Pred, Allocator&gt;;</span></pre></blockquote>
 
     
 Delete &sect;26.5.5.1p4 [unord.multimap.overview]:
@@ -369,22 +360,19 @@ Modify &sect;26.5.6.1 [unord.set.overview] as follows:
 <blockquote><pre>    void reserve(size_type n);
   };
 
-<span class="ins">  template&lt;class Hash, class Pred, class Allocator&gt;
-  unordered_set(size_t, Hash, Pred, Allocator)
+<span class="ins">  template&lt;class T, class Hash, class Pred = equal_to&lt;T&gt;, class Allocator = allocator&lt;T&gt;&gt;
+  explicit unordered_set(size_t, Hash, Pred = Pred(), Allocator = Allocator())
     -&gt; unordered_set&lt;T, Hash, Pred, Allocator&gt;;</span>
 
   
-<span class="ins">  template&lt;class T, class Allocator&gt; 
-  unordered_set(size_t, Allocator)
-    -&gt; unordered_set&lt;T, hash&lt;T&gt;,
-		     equal_to&lt;T&gt;, Allocator&gt;;
+<span class="ins">  template&lt;class T, class Hash = hash&lt;T&gt;, Pred = equal_to&lt;T&gt;, class Allocator&gt; 
+  explicit unordered_set(size_t, Allocator)
+    -&gt; unordered_set&lt;T, Hash, Pred, Allocator&gt;;
   
-  template&lt;class Hash, class Allocator&gt; 
-  unordered_set(size_t, Hash, Allocator)
-    -&gt; unordered_set&lt;T, Hash,
-		     equal_to&lt;T&gt;, Allocator&gt;;</span>
+  template&lt;class T, class Hash, Pred = equal_to&lt;T&gt;, class Allocator&gt; 
+  explicit unordered_set(size_t, Hash, Allocator)
+    -&gt; unordered_set&lt;T, Hash, Pred, Allocator&gt;;</span>
 
-  
   </pre></blockquote>
 Delete &sect;26.5.6.1p4 [unord.set.overview]:
 <blockquote><span class="del">A <tt>size_type</tt> parameter type in an <tt>unordered_set</tt> deduction 
@@ -395,56 +383,24 @@ Modify &sect;26.5.7.1 [unord.multiset.overview] as follows:
 <blockquote><pre>    void reserve(size_type n);
   };
 
-<span class="ins">  template&lt;class T, class Hash, class Pred, class Allocator&gt;
-  unordered_multiset(size_t, Hash, Pred, Allocator)
+<span class="ins">  template&lt;class T, class Hash, class Pred = equal_to&lt;T&gt;, class Allocator = allocator&lt;T&gt;&gt;
+  explicit unordered_multiset(size_t, Hash, Pred = Pred(), Allocator = Allocator())
     -&gt; unordered_multiset&lt;T, Hash, Pred, Allocator&gt;;</span>
 
-
-<span class="ins">  template&lt;class T, class Allocator&gt; 
-  unordered_multiset(size_t, Allocator)
-    -&gt; unordered_multiset&lt;T, hash&lt;T&gt;,
-		     equal_to&lt;T&gt;, Allocator&gt;;
   
-  template&lt;class T, class Hash, class Allocator&gt; 
-  unordered_multiset(size_t, Hash, Allocator)
-    -&gt; unordered_multiset&lt;T, Hash,
-		     equal_to&lt;T&gt;, Allocator&gt;;</span>
-
+<span class="ins">  template&lt;class T, class Hash = hash&lt;T&gt;, Pred = equal_to&lt;T&gt;, class Allocator&gt; 
+  explicit unordered_multiset(size_t, Allocator)
+    -&gt; unordered_multiset&lt;T, Hash, Pred, Allocator&gt;;
+  
+  template&lt;class T, class Hash, Pred = equal_to&lt;T&gt;, class Allocator&gt; 
+  explicit unordered_multiset(size_t, Hash, Allocator)
+    -&gt; unordered_multiset&lt;T, Hash, Pred, Allocator&gt;;</span>
   
 </pre></blockquote>
 Delete &sect;26.5.7.1p4 [unord.multiset.overview]:
 <blockquote><span class="del">A <tt>size_type</tt> parameter type in an <tt>unordered_multiset</tt> deduction 
     guide refers to the <tt>size_type</tt> member type of the primary <tt>unordered_multiset</tt> template.</span></blockquote>
 
-At the end of the definition of class <tt>queue</tt> in &sect;26.6.4.1 [queue.defn], add the following deduction guide
-    
-<blockquote><pre>    void swap(queue&amp; q) noexcept(is_nothrow_swappable_v&lt;Container&gt;)
-      { using std::swap; swap(c, q.c); }
-  };
-  
-<span class="ins">  template&lt;class T, class Allocator&gt; 
-  queue(Allocator) -&gt; queue&lt;T&gt;;</span></pre></blockquote>
-    
-At the end of the definition of class <tt>priority_queue</tt> in &sect;26.6.6.5 [priority.queue], add the
-    following deduction guides:
-<blockquote><pre>    void swap(priority_queue&amp; q) noexcept(is_nothrow_swappable_v&lt;Container&gt; &amp;&amp;
-                                              is_nothrow_swappable_v&lt;Compare&gt;)
-      { using std::swap; swap(c, q.c); swap(comp, q.comp); }
-    };
-    
-<span class="ins">  template&lt;class T, class Allocator&gt; 
-  priority_queue(Allocator) -&gt; priority_queue&lt;T&gt;;
-  
-  template&lt;class T, class Compare, class Allocator&gt;
-  priority_queue(Compare, Allocator)
-    -&gt; priority_queue&lt;T, vector&lt;T&gt;, Compare&gt;;</span></pre></blockquote>
-At the end of the definition of class <tt>stack</tt> in &sect;26.6.6.1 [stack], add the following deduction guide:
-<blockquote><pre>    void swap(stack&amp; q) noexcept(is_nothrow_swappable_v&lt;Container&gt;)
-      { using std::swap; swap(c, q.c); }
-  };
-<span class="ins">  template&lt;class T, class Allocator&gt; 
-  stack(Allocator) -&gt; stack&lt;T&gt;;
-</span></pre></blockquote>
 At the end of the
 definition of class <tt>promise</tt> in &sect;33.6.6 [futures.promise], insert the following:
 <blockquote><pre>    <span class="comment">// setting the result with deferred notification</span>
