@@ -187,8 +187,8 @@ int main()
 basic_string(Allocator) -&gt; basic_string&lt;T, Traits, Allocator&gt;;
 </span></pre></blockquote>
 In &sect;24.3.2.2 [string.cons], insert the following:
-<blockquote><pre><span class="ins">template&lt;class T, class Allocator&gt;
-basic_string(Allocator) -&gt; basic_string&lt;T, char_traits&lt;T&gt;, Allocator&gt;;
+<blockquote><pre><span class="ins">template&lt;class T,  class Traits = char_traits&lt;T&gt;, class Allocator&gt;
+basic_string(Allocator) -&gt; basic_string&lt;T, Traits, Allocator&gt;;
 </span></pre>
     <blockquote><span class="ins"><em>Remarks:</em> Shall not participate in overload resolution if <tt>Allocator</tt> is a type that does not qualify as an allocator [sequence.reqmts].</span></blockquote></blockquote>
 
