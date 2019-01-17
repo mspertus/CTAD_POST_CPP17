@@ -347,15 +347,58 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 		<li>Perform template argument deduction (12.9.2) on <tt>g</tt> with the exception that deduction does
 	not fail if not all template parameters of <tt>g</tt> are deduced.</li>
 		<li>Form the desired function or function template as follows
-		<ul>The parameters and return type are constructed by substituing all of the deductions from the previous step into to the parameters (including default arguments) and return type of <tt>f</tt></ul>
-		<ul>The template parameters consist of those template parameters of <tt>f</tt> or <tt>g</tt>
-			that appear in the parameters and return type constructed in the previous step</ul>
-		<ul>The requires clause consists demands satisfaction of an anonymous concept that the template
-			arguments of <tt>A</tt> are deducible from those of the substituted return type</ul></li>
+		<ul><li>The parameters and return type are constructed by the substitution of
+			all of the deductions from the deduction of <tt>g</tt> into 
+			the parameters (including default arguments) and return type of <tt>f</tt></li>
+		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>g</tt>
+			that appear in the parameters and return type constructed in the previous step</li>
+		<li>The requires clause consists of an anonymous concept that the template
+			parameters of <tt>A</tt> can be deduced from those of the return type by applying 
+			the procedure of 12.9.2.5 (temp.deduct.type) with parameter <tt>A&lt;X<sub>j</sub>...&gt;</tt>
+			and the return type as argument</li>
+			<li>If <tt>f</tt> is the copy deduction candidate (11.3.1.8)
+			or was generated from a <em>deduction-guide</em> (11.3.1.8)
+				or was generated from a constructor or <em>deduction guide</em>
+				with an <tt>explicit-specifier</tt>, then
+			so is the function or function template being formed here</li></ul>
 		</ul>
+	Initialization and overload resolution are performed as described in 9.3 and 11.3.1.3, 11.3.1.4, or 11.3.1.7 (as
+appropriate for the type of initialization performed) for an object of a hypothetical class type, where the
+selected functions and function templates are considered to be the constructors of that class type for the
+purpose of forming an overload set, and the initializer is provided by the context in which class template
+argument deduction was performed. As an exception, the first phase in 11.3.1.7 (considering initializer-list
+constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
+	where <tt>U</tt> is a specialization of <tt>C</tt> or a class derived from a specialization of <tt>C</tt>.
+	If the function or 
+	function template was generated from a constructor or <em>deduction-guide</em>
+that had an <em>explicit-specifier</em>, each such notional constructor is considered to
+	have that same <em>explicit-specifier</em>. All such notional constructors are considered 
+	to be public members of the hypothetical class type. [<em>Note:</em> The requires clause ensures that
+	the return type of the selected overload will be deducibly of type <tt>B</tt>. <em>-- end note</em>]
+	<br/>
+	[<em>Example:</em><br/>
+	<pre>template &lt;class T, class U&gt; struct C {
+	  C(T, U);
+	};
+	template&lt;class T, class U&gt;
+	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
 	
+	template&lt;class T&gt;
+	using A = C&lt;T *, T *&gt;;
+	
+	// <em>Exposition only</em>
+	// <em>f (see above) derived from deduction guide</em>
+	template&lt;class T, class U&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt; f(T, U);
+	// <em>g (see above)</em>
+	template&lt;class T&gt; void f(A&lt;T&gt;&amp;&amp;) {}
+	template&lt;class T, class U, class Enable=void&gt; 
+	struct Test  : public std::bool_constant&lt;false&gt; {};
+	template&lt;class T, class U&gt;
+	struct Test&lt;T, U, decltype(f(C&lt;T,std::type_identity_t&lt;U&gt;&gt;{}))>
+	  : public std::bool_constant&lt;true&gt; {};
+	</pre>
+	<em>-- end example</em>]
 		</blockquote>
-
     <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
