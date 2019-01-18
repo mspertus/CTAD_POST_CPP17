@@ -273,24 +273,19 @@ Argument Deduction for type aliases as in the following example.
 allowing the programmer to write explicit deduction guides specifically for an alias
 template.
 <h3>Algorithm</h3>
-For simplicity, in this explanation, we continue the practice of informally
-	referring to the overloaded function candidates for deduction as
-	deduction guides even though the standard only uses that term
-	for deduction guides that come from a <em>deduction-guide</em> and
-	not the implicitly-generated deductions. See the wording below for
-	a precises formulation<p>
-For deriving deduction guides for the alias templates from guides in the
- class, we use the following approach (for which we are very grateful 
-for the invaluable assistance of Richard Smith):
+For deriving deduction guides for the alias templates from guides in the class, we use the following approach (for which we are very grateful for the invaluable assistance of Richard Smith):
 <ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
     the deduction guide from the alias template. We do not require that this deduces all the template
     parameters as nondeducible contexts may of course occur in general</li>
     <li>Substitute any deductions made back into the deduction guides. Since the previous step may not
     have deduced all template parameters of the deduction guide, the new guide may have template
     parameters from both the type alias and the original deduction guide.</li>
-    <li>Constrain the return type to ensure that the template arguments for the alias are deducible</li>
-    <li>If we started with a copy deduction candidate or a candidate generated from a deduction guide
-	of <tt>C</tt>, the same applies to new guide</li></ol>
+    <li>Derive the corresponding deduction guide for the alias template by 
+    deducing the alias from the result type. Note that a constraint may be necessary
+    as whether and how to deduce the alias from the result type may depend on the
+    actual argument types.</li>
+    <li>The guide generated from the copy deduction guide should be given
+    the precedence associated with copy deduction guides during overload resolution</li></ol>
 Let us illustrate this process with an example. Consider the following example:
 <blockquote><div><div id="highlighter_41752" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; </code><code class="cpp keyword bold">using</code> <code class="cpp plain">P = pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 Naively using the deduction guides from pair is not ideal because they
@@ -303,7 +298,7 @@ Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> f
     a new deduction guide
 <blockquote><div><div id="highlighter_147664" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; pair(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
-<blockquote><div><div id="highlighter_362756" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; P(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; P&lt;<code class="cpp color1 bold">int</code>, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+<blockquote><div><div id="highlighter_362756" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; P(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; P&lt;T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 A repository of additional expository materials and worked out examples used in the refinement of this algorithm 
     is maintained <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
 <h2>Deducing from inherited constructors</h2>
