@@ -373,7 +373,7 @@ constructors) is omitted if the initializer list consists of a single expression
 that had an <em>explicit-specifier</em>, each such notional constructor is considered to
 	have that same <em>explicit-specifier</em>. All such notional constructors are considered 
 	to be public members of the hypothetical class type. [<em>Note:</em> The requires clause ensures that
-	the return type of the selected overload will be deducibly of type <tt>B</tt>. <em>-- end note</em>]
+	a specialization of <tt>A</tt> can be deduced from the return type. <em>&mdash; end note</em>]
 	<br/>
 	[<em>Example:</em><pre>
 	template &lt;class T, class U&gt; struct C {
@@ -389,10 +389,13 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	// <em>f is derived (11.3.1.8) from the deduction-guide of C</em>
 	template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
 	template&lt;class T, class U> void g(C&lt;T, std::type_identity_t&lt;U&gt;&gt;&amp;&amp;);
+	// <em>Template argument deduction of g(C&lt;V *, V *&gt;{}) deduces T as V *</em>
+	
+	//<em>The following concept ensures a specialization of A is deduced</em>
 	template&lt;T&gt; void t(A&lt;T&gt;&amp;&amp;);
 	template&lt;T&gt; concept deduces_A = requires { t(std::declval&lt;T&gt;()); }
-	// <em>Template argument deduction of g(C&lt;V *, V *&gt;{}) deduces T as V *</em>
-	// <em>Modifying f as described by the procedure above</em>
+
+	// <em>Candidate is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
 	auto f(V *, U) -&gt; C&lt;V, std::type_identity_t&lt;U&gt;&gt;
 	  requires deduces_A&lt;C&lt;V, std::type_identity_t&lt;U&gt;&gt;&gt;;
@@ -401,9 +404,9 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	double d{};
 	A a1(&amp;i, &amp;i); // <em>A&lt;int&gt;</em>
 	A a2(i, i); // <em>ill-formed - fails to match parameter list</em>
-	A a3(&amp;i, &amp;d); // <em>ill-formed - not an A</em>
+	A a3(&amp;i, &amp;d); // <em>ill-formed - cannot deduce alias template from C&lt;int *, double *&gt; </em>
 	</pre>
-	<em>-- end example</em>]
+	<em>&mdash; end example</em>]
 		</blockquote>
     <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
