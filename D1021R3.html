@@ -330,7 +330,7 @@ details would become visible if only the internal guides were inherited.
 described above for alias templates.
 <h2>Wording</h2>
 Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
-<blockquote>When resolving a placeholder for a deduced class type (9.1.7.5) where the
+<blockquote><ins>When resolving a placeholder for a deduced class type (9.1.7.5) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	representing a class template specialization of a class <tt>C</tt> with template arguments <tt><em>X<sub>j</sub></em></tt>, a
 	set of functions and function templates are formed as follows. For each function or function
@@ -407,7 +407,14 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	A a3(&amp;i, &amp;d); // <em>ill-formed - cannot deduce alias template from C&lt;int *, double *&gt; </em>
 	</pre>
 	<em>&mdash; end example</em>]
-		</blockquote>
+		</ins></blockquote>
+Insert a bullet after over.match.best/1.9 as follows
+	<blockquote><ins>
+	<ul><li><tt>F1</tt> is generated from class template argument deduction (over.match.class.deduct) for
+		a class <tt>D</tt>, <tt>F2</tt> is generated from class template argument deduction for
+		a base class <tt>B</tt> of <tt>D</tt>, and for all arguments the corresponding
+		parameters of <tt>F1</tt> and <tt>F2</tt> have the same type, or if not that,</li></ul></ins></blockquote>
+
     <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
      SyntaxHighlighter.all()
