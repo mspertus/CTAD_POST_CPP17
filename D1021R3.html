@@ -273,6 +273,12 @@ Argument Deduction for type aliases as in the following example.
 allowing the programmer to write explicit deduction guides specifically for an alias
 template.
 <h3>Algorithm</h3>
+For simplicity, in this explanation, we continue the practice of informally
+	referring to the overloaded function candidates for deduction as
+	deduction guides even though the standard only uses that term
+	for deduction guides that come from a <em>deduction-guide</em> and
+	not the implicitly-generated deductions. See the wording below for
+	a precises formulation<p>
 For deriving deduction guides for the alias templates from guides in the
  class, we use the following approach (for which we are very grateful 
 for the invaluable assistance of Richard Smith):
@@ -282,12 +288,9 @@ for the invaluable assistance of Richard Smith):
     <li>Substitute any deductions made back into the deduction guides. Since the previous step may not
     have deduced all template parameters of the deduction guide, the new guide may have template
     parameters from both the type alias and the original deduction guide.</li>
-    <li>Derive the corresponding deduction guide for the alias template by 
-    deducing the alias from the result type. Note that a constraint may be necessary
-    as whether and how to deduce the alias from the result type may depend on the
-    actual argument types.</li>
-    <li>The guide generated from the copy deduction guide should be given
-    the precedence associated with copy deduction guides during overload resolution</li></ol>
+    <li>Constrain the return type to ensure that the template arguments for the alias are deducible</li>
+    <li>If we started with a copy deduction candidate or a candidate generated from a deduction guide
+	of <tt>C</tt>, the same applies to new guide</li></ol>
 Let us illustrate this process with an example. Consider the following example:
 <blockquote><div><div id="highlighter_41752" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; </code><code class="cpp keyword bold">using</code> <code class="cpp plain">P = pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 Naively using the deduction guides from pair is not ideal because they
@@ -300,7 +303,7 @@ Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> f
     a new deduction guide
 <blockquote><div><div id="highlighter_147664" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; pair(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
-<blockquote><div><div id="highlighter_362756" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; P(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; pair&lt;<code class="cpp color1 bold">int</code>, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+<blockquote><div><div id="highlighter_362756" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; P(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; P&lt;<code class="cpp color1 bold">int</code>, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
 A repository of additional expository materials and worked out examples used in the refinement of this algorithm 
     is maintained <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
 <h2>Deducing from inherited constructors</h2>
@@ -341,21 +344,22 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 	<ul><li>Form a hypothetical function or function template <tt>g</tt> with the following properties
 		<ul><li>The template parameters, if
 			any, are the template parameters of <tt>f</tt> (including default template arguments).</li>
-			<li>The arguments are the template arguments of <tt>C</tt> in the result
+			<li>The argument is an rvalue reference to the result
 			type of <tt>f</tt></li>
 		<li>The return type is void</li></ul>
-		<li>Perform template argument deduction (12.9.2) on <tt>g</tt> with the exception that deduction does
+		<li>Perform template argument deduction (12.9.2) on <tt>g(C&lt;X<sub>j</sub>...&gt;{})</tt> with the exception that deduction does
 	not fail if not all template parameters of <tt>g</tt> are deduced.</li>
 		<li>Form the desired function or function template as follows
-		<ul><li>The parameters and return type are constructed by the substitution of
-			all of the deductions from the deduction of <tt>g</tt> into 
-			the parameters (including default arguments) and return type of <tt>f</tt></li>
+		<ul><li>The parameters and return type are constructed by the substituting 
+			 into 
+			the parameters (including default arguments) and return type of <tt>f</tt>
+			the deductions
+			of all template parameters that were successfully deduced in the deduction of <tt>g</tt></li>
 		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>g</tt>
 			that appear in the parameters and return type constructed in the previous step</li>
-		<li>The requires clause consists of an anonymous concept that the template
-			parameters of <tt>A</tt> can be deduced from those of the return type by applying 
-			the procedure of 12.9.2.5 (temp.deduct.type) with parameter <tt>A&lt;X<sub>j</sub>...&gt;</tt>
-			and the return type as argument</li>
+		<li>The constraints temp.constr.decl (12.4.2) are the conjunction of the constraints
+			of <tt>f</tt> with a constraint that the template parameters of <tt>A</tt>
+			are deducible (12.2.9.5) from the return type</li>
 			<li>If <tt>f</tt> is the copy deduction candidate (11.3.1.8)
 			or was generated from a <em>deduction-guide</em> (11.3.1.8)
 				or was generated from a constructor or <em>deduction guide</em>
@@ -376,26 +380,33 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	to be public members of the hypothetical class type. [<em>Note:</em> The requires clause ensures that
 	the return type of the selected overload will be deducibly of type <tt>B</tt>. <em>-- end note</em>]
 	<br/>
-	[<em>Example:</em><br/>
-	<pre>template &lt;class T, class U&gt; struct C {
+	[<em>Example:</em><pre>
+	template &lt;class T, class U&gt; struct C {
 	  C(T, U);
 	};
 	template&lt;class T, class U&gt;
 	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
 	
-	template&lt;class T&gt;
-	using A = C&lt;T *, T *&gt;;
+	template&lt;class V&gt;
+	using A = C&lt;V *, V *&gt;;
 	
-	// <em>Exposition only</em>
-	// <em>f (see above) derived from deduction guide</em>
-	template&lt;class T, class U&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt; f(T, U);
-	// <em>g (see above)</em>
-	template&lt;class T&gt; void f(A&lt;T&gt;&amp;&amp;) {}
-	template&lt;class T, class U, class Enable=void&gt; 
-	struct Test  : public std::bool_constant&lt;false&gt; {};
-	template&lt;class T, class U&gt;
-	struct Test&lt;T, U, decltype(f(C&lt;T,std::type_identity_t&lt;U&gt;&gt;{}))>
-	  : public std::bool_constant&lt;true&gt; {};
+	// <em>Possible exposition only implementation of the above procedure</em>
+	// <em>f is derived (11.3.1.8) from the deduction-guide of C</em>
+	template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	template&lt;class T, class U> void g(C&lt;T, std::type_identity_t&lt;U&gt;&gt;&amp;&amp;);
+	template&lt;T&gt; void t(A&lt;T&gt;&amp;&amp;);
+	template&lt;T&gt; concept deduces_A = requires { t(std::declval&lt;T&gt;()); }
+	// <em>Template argument deduction of g(C&lt;V *, V *&gt;{}) deduces T as V *</em>
+	// <em>Modifying f as described by the procedure above</em>
+	template&lt;class V, class U&gt; 
+	auto f(V *, U) -&gt; C&lt;V, std::type_identity_t&lt;U&gt;&gt;
+	  requires deduces_A&lt;C&lt;V, std::type_identity_t&lt;U&gt;&gt;&gt;;
+	// <em>End exposition only</em>
+	int i{};
+	double d{};
+	A a1(&amp;i, &amp;i); // <em>A&lt;int&gt;</em>
+	A a2(i, i); // <em>ill-formed - fails to match parameter list</em>
+	A a3(&amp;i, &amp;d); // <em>ill-formed - not an A</em>
 	</pre>
 	<em>-- end example</em>]
 		</blockquote>
