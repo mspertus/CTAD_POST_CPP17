@@ -329,6 +329,8 @@ details would become visible if only the internal guides were inherited.
     for determining deduction guides for the base class template as 
 described above for alias templates.
 <h2>Wording</h2>
+At the end over.match.class.deduct/1, add an addition bullet
+<blockquote><ins><ul><li>If <tt>C</tt> is defined and satisfies the conditions for an aggregate class ([dcl.init.aggr]/1.1 - 1.4), not considering dependent base classes, let <em>e<sub>1</sub>, &hellip;, e<sub>n</sub></em> be the elements of <tt>C</tt> ([dcl.init.aggr]/2), not considering dependent base classes, and let <em>T<sub>1</sub>, &hellip;, T<sub>n</sub></em> be their respective declared types. If <tt>n > 0</tt>, an additional function template, called the aggregate deduction candidate, is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, &hellip;, T<sub>n</sub>)</tt>. Additionally, for each integer 0 &le; i &lt; n, if the types <em>T<sub>i</sub>, &hellip;, T<sub>n</sub></em> are all default-constructible, the ith parameter of this function template shall have a default argument of the form {} .</li></ul></ins></blockquote>
 Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
 <blockquote><ins>When resolving a placeholder for a deduced class type (9.1.7.5) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
