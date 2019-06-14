@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <style>
+
+.comment { color: #999999; font-style: italic; }
+.pre { color: #000099; }
+.string { color: #009900; }
+.char { color: #009900; }
+.float { color: #996600; }
+.int { color: #999900; }
+.bool { color: #000000; font-weight: bold; }
+.type { color: #FF6633; }
+.flow { color: #FF0000; }
+.keyword { color: #990000; }
+.operator { color: #663300; font-weight: bold; }
+.operator { color: #663300; font-weight: bold; }
+pre.code {
+    border: 2px solid #666;
+    background-color: #F4F4F4;
+    padding-left: 10px;
+    padding-top: 0px;
+}
+code {
+    border: 2px solid #d0d0d0;
+    background-color: LightYellow;
+    padding: 2px;
+    padding-left: 10px;
+    display:table;
+    white-space:pre;
+    margin:2px;
+    margin-bottom:10px;
+}
+dt {
+    font-weight: bold;
+}
+.ins {
+    background-color:#A0FFA0;
+}
+.del {
+    background-color:#FFA0A0;
+    text-decoration:line-through
+}
+.TODO {
+    background-color: LightYellow;
+    color: red;
+}
+	  
+</style>
+
+<title>Inferencing heap objects</title>
+</head>
+
+<body>
+<p>Document number: D1069R1 <br>
+Date: 2018-11-25<br>
+Reply-To:<br>
+&nbsp;&nbsp;&nbsp;Mike Spertus, Symantec (<a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a>)<br>
+&nbsp;&nbsp;&nbsp;Walter E. Brown (<a href="mailto:webrown.cpp@gmail.com"> webrown.cpp@gmail.com</a>)<br>
+&nbsp;&nbsp;&nbsp;Stephan T. Lavavej (<a href="mailto:stl@exchange.microsoft.com">stl@exchange.microsoft.com</a>)<br>
+Audience: {Library Evolution, Library} Working Group
+</p>
+<h2>Changes from previous version</h2>
+Now focuses entirely on inferencing heap objects. The remaining portions of P1069R0 may be considered later in separate papers.
+<h1>Inferencing heap objects</h1>
+While class template argument deduction can be used for
+    objects with static and automatic duration, it generally cannot be  
+    used for creating objects with dynamic duration as the following attempts show:
+
+    <code>optional o(5); // OK. Static duration. optional&lt;int&gt;
+        
+// Try to create dynamic duration object.
+auto o1 = new optional(5);  // Already violates both Core Guidelines <a href="https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rr-ptr">R.3</a> and <a href="https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rr-newdelete">R.11</a><br>
+<strike>auto o2 = unique_ptr(o1);</strike> // Oops, ill-formed. Can't deduce unique_ptr from raw ptr</code>
+
+We propose simply making dynamic object creation with <tt>make_unique</tt>, <tt>make_shared</tt>,
+    and <tt>allocate_shared</tt>
+work just like the normal way one would translate a static and automatic declaration to a dynamic
+declaration
+<code>int i1(5);                       // Static
+auto i2 = make_unique&lt;int&gt;(5);   // Make dynamic by moving decl-specifier to make_unique template argument
+option o1(5);
+auto o2 = make_unique&lt;optional&gt;(5); // Again, make dynamic by moving decl-specifier to make_unique template argument</code>
+Implementing this can be as simple as the following code, which can be seen working on <a href="https://wandbox.org/permlink/jn49SA7tlDO02gcw">Wandbox</a>
+<code>template&lt;template &lt;typename ...U&gt; typename T, typename ...A&gt;
+auto make_unique(A&amp;&amp; ...a) {
+    return std::unique_ptr&lt;decltype(T(std::forward&lt;A&gt;(a)...))&gt;(new T(std::forward&lt;A&gt;(a)...));
+}</code>
+<b>Notes:</b>
+<ul><li>We only provide overloads for creating non-array objects as the other examples are not natural to deduce</li>
+    <li>For simplicity, we do not propose supporting the case of non-type template parameters as
+    it is far less frequent and seems far more complex.
+    If and only if library implementers feel that there are no implementation concerns for non-type
+    template parameters, then that should be supported as well</li>
+    <li>It is worth pointing out that because this code exactly matches <em>mutatis mutandi</em> the automatic duration
+    declaration case, it should have no cause to be in any way more dangerous or confusing
+    that what is supported for objects created with static or automatic duration</li></ul>
+<h2>Wording</h2>
+<blockquote><pre>//23.11.1, class template unique_ptr
+template&lt;class T> struct default_delete;
+template&lt;class T> struct default_delete&lt;T[]>;
+template&lt;class T, class D = default_delete&lt;T>> class unique_ptr;
+template&lt;class T, class D> class unique_ptr&lt;T[], D>;
+template&lt;class T, class... Args> unique_ptr&lt;T>
+  make_unique(Args&amp;&amp;... args);  // T is not array
+<ins>template&lt;template &lt;class ...U> class T, class ...Args>
+  auto make_unique(Args&amp;&amp;... args) -> unique_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;</ins>
+template&lt;class T> unique_ptr&lt;T> 
+  make_unique(size_t n);  // T is U[]</pre>
+<pre>//23.11.3.6, shared_ptr creation
+template&lt;class T, class... Args>
+  shared_ptr&lt;T> make_shared(Args&amp;&amp;... args);  // T is not array
+<ins>template&lt;template &lt;class ...U> class T, class ...Args>
+  auto make_shared(Args&amp;&amp;... args) -> shared_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;</ins>
+template&lt;class T, class A, class... Args>
+  shared_ptr&lt;T> allocate_shared(const A&amp; a, Args&amp;&amp;... args); // T is not array
+<ins>template&lt;template &lt;class ...U> class T, class A, class ...Args>
+  auto allocate_shared(const A&amp;, Args&amp;&amp;... args) -> shared_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;</ins>
+</pre>
+<pre>23.11.1.4 unique_ptr creation  [unique.ptr.create]
+template&lt;class T, class... Args> unique_ptr&lt;T> make_unique(Args&amp;&amp;... args);
+  <em>Remarks</em>: This function shall not participate in overload resolution unless T is not an array.2
+  <em>Returns</em>: unique_ptr&lt;T>(new T(std::forward&amp;Args>(args)...)).
+<ins>template&lt;template &lt;class ...U> class T, class ...Args>
+auto make_unique(Args&amp;&amp;... args) -> unique_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;
+  <em>Returns</em>: unique_ptr&lt;decltype(T(std::forward&lt;A>(a)...))>(new T(std::forward&lt;A>(a)...))</ins>  
+</pre></blockquote>
+<blockquote>23.11.3.6 shared_ptr creation   [util.smartptr.shared.create]<br>
+The common requirements that apply to all make_shared and allocate_shared overloads, unless speciﬁed
+otherwise, are described below.
+<pre>template&lt;class T, ...>
+  shared_ptr&lt;T> make_shared(args);
+<ins>template&lt;template &lt;class ...U> class T, class ...Args>
+  auto make_shared(Args&amp;&amp;... args) -> shared_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;</ins>
+template&lt;class T, class A, ...>
+  shared_ptr&lt;T> allocate_shared(const A&amp; a, args);
+<ins>template&lt;template &lt;class ...U> class T, class A, class ...Args>
+  auto allocate_shared(const A&amp;, Args&amp;&amp;... args) -> shared_ptr&lt;decltype(T(std::forward&lt;Args>(args)...))>;</ins>
+</pre></blockquote>
+</body></html>
