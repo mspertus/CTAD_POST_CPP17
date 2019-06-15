@@ -376,23 +376,17 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
     (over.match.class.deduct 11.3.1.8), form a function or function
 	template <tt>f'</tt> according to the following procedure:
-	<ul><li>Form a hypothetical function or function template <tt>g</tt> where
-		<ul><li>the template parameters, if
-			any, are the template parameters of <tt>f</tt> (including default template arguments),</li>
-			<li>the single parameter type is an rvalue reference to the result
-			type of <tt>f</tt>, and</li>
-		<li>the return type is void.</li></ul>
-		<li>Perform template argument deduction (temp.deduct 12.9.2) on a
-            function call of <tt>g</tt> with a single prvalue
-            argument of type <tt>C&lt;<em>L</em>&gt;</tt> with the exception that deduction does
-	not fail if not all template parameters of <tt>g</tt> are deduced.</li>
+	<ul><li>Follow the procedure below for deducing the arguments of the result type of <tt>f</tt>
+			from <tt>C&lt;L&gt;</tt>with the exception that deduction does
+	not fail if not all template arguments are deduced.</li>
 		<li>Form <tt>f'</tt> as follows:
 		<ul><li>The parameters and return type are constructed by  substituting 
 			 into 
 			the parameters (including default arguments) and return type of <tt>f</tt>
 			the deductions
-			of all template parameters that were successfully deduced in the deduction of <tt>g</tt>.</li>
-		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>g</tt>
+			of all template parameters that were successfully deduced in the deduction of 
+			the result type of <tt>f</tt>.</li>
+		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>A</tt>
 			that appear in the parameters and return type constructed in the previous step.</li>
 		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of the associated constraints
 			of <tt>f</tt> and a constraint that is 
@@ -410,7 +404,7 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
     The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
 <blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
 
-    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type 12.7.2.1), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
+    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.deduct.type 12.9.2.5), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
 <p>
 	Initialization and overload resolution are performed as described in 
     (dcl.init 9.3) and (over.match.ctor 11.3.1.3), 
