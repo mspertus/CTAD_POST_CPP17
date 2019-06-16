@@ -341,11 +341,22 @@ described above for alias templates.
       </ul>
     </li>
   </ul>
-	<p><ins>In addition, if <tt>C</tt> satisfies the conditions for an aggregate class with the assumption that any dependent base class has no virtual functions and no virtual base classes, let <em>e<sub>1</sub>, ... e<sub>n</sub></em> be the elements of <tt>C</tt> ([dcl.init.aggr]). 
-		If there is at least one such element, and the initializer is a non-empty braced-init-list or parenthesized expression-list, the set contains an additional function template, called the aggregate deduction candidate, defined as follows. Let <em>x<sub>1</sub>, ..., x<sub>n</sub></em> 
-		be the elements of the <em>initializer-list</em>, <em>designated-initializer-list</em>, or <em>expression-list</em>. The aggregate deduction candidate is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, ... T<sub>n</sub>)</tt>, where <tt>T<sub>i</sub></tt> is the declared type of the element <em>e<sub>i</sub></em> of <tt>C</tt> which would be explicitly initialized by <em>x<sub>i</sub></em> as described in [dcl.init.aggr].
-	  
-
+  <p><ins>In addition, if <tt>C</tt> satisfies the
+  conditions for an aggregate class with the assumption that
+  any dependent base class has no virtual functions and no virtual
+  base classes, and if there is at least one element of <tt>C</tt>
+  ([dcl.init.aggr]), the set contains
+  an additional function template,
+  called the aggregate deduction candidate, defined as follows.
+  Let <tt>T</tt><sub>1</sub>, …, <tt>T</tt><sub><em>n</em></sub> be the
+  declared types of the elements of <tt>C</tt>.
+  The aggregate deduction candidate is derived as above from a
+  hypothetical constructor <tt>C(T</tt><sub>1</sub>, …,
+  <tt>T</tt><sub><em>n</em></sub><tt>)</tt>.
+  Additionally, for each integer 1&nbsp;≤&nbsp;<em>i</em>&nbsp;≤&nbsp;<em>n</em>,
+  if the types <tt>T</tt><sub><em>i</em></sub>, …, <tt>T</tt><sub><em>n</em></sub> are all
+  dependent or default-constructible, the <em>i</em><sup>th</sup> parameter of this function template
+      has a default argument of the form <tt>T<sub>i</sub>{}</tt>.
       <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
         class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
@@ -366,7 +377,7 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
     (over.match.class.deduct 11.3.1.8), form a function or function
 	template <tt>f'</tt> according to the following procedure:
 	<ul><li>Follow the procedure below for deducing the arguments of the result type of <tt>f</tt>
-			from <tt>C&lt;L&gt;</tt> with the exception that deduction does
+			from <tt>C&lt;L&gt;</tt>with the exception that deduction does
 	not fail if not all template arguments are deduced.</li>
 		<li>Form <tt>f'</tt> as follows:
 		<ul><li>The parameters and return type are constructed by  substituting 
@@ -435,7 +446,8 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
         
         // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
         template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
-	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+	template&lt;class T, class U> void g(C&lt;T, std::type_identity_t&lt;U&gt;&gt;&amp;&amp;);
+	// <em>Template argument deduction of g(C&lt;V *, V *&gt;{}) deduces T as V *</em>
 	
 	// <em>f' is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
