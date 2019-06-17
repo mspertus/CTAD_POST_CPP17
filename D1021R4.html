@@ -343,8 +343,8 @@ described above for alias templates.
     </li>
   </ul>
 	<p><ins>In addition, if <tt>C</tt> satisfies the conditions for an aggregate class with the assumption that any dependent base class has no virtual functions and no virtual base classes, let <em>e<sub>1</sub>, ... e<sub>n</sub></em> be the elements of <tt>C</tt> ([dcl.init.aggr]). 
-		If there is at least one such element, and the initializer is a non-empty <em>braced-init-list</em> or parenthesized <em>expression-list</em>, the set contains an additional function template, called the aggregate deduction candidate, defined as follows. Let <em>x<sub>1</sub>, ..., x<sub>n</sub></em> 
-		be the elements of the <em>initializer-list</em>, <em>designated-initializer-list</em>, or <em>expression-list</em>. The aggregate deduction candidate is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, ..., T<sub>n</sub>)</tt>, where <tt>T<sub>i</sub></tt> is the declared type of the element <em>e<sub>i</sub></em> of <tt>C</tt> which would be explicitly initialized by <em>x<sub>i</sub></em> as described in [dcl.init.aggr].
+		If there is at least one such element, and the initializer is a non-empty <em>braced-init-list</em> or parenthesized <em>expression-list</em>, the set contains an additional function template, called the aggregate deduction candidate, defined as follows. Let <em>x<sub>1</sub>, ..., x<sub>m</sub></em> 
+		be the elements of the <em>initializer-list</em>, <em>designated-initializer-list</em>, or <em>expression-list</em>. The aggregate deduction candidate is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, ..., T<sub>m</sub>)</tt>, where <tt>T<sub>i</sub></tt> is the declared type of the element <em>e<sub>i</sub></em> of <tt>C</tt> which would be explicitly initialized by <em>x<sub>i</sub></em> as described in [dcl.init.aggr].
 	  
 
       <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
