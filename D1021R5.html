@@ -360,11 +360,13 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 <blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-    naming a specialization of a class template <tt>C</tt> with 
+    naming a specialization of a class template or alias template
+    <tt>C</tt> with 
     template argument list <em>L</em>, a
 	set of functions and function templates is formed as follows. For each function or function
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
-    (over.match.class.deduct 11.3.1.8), form a function or function
+    (over.match.class.deduct or over.match.alias.deduct), 
+    form a function or function
 	template <tt>f'</tt> according to the following procedure:
 	<ul><li>Deduce the arguments of the return type of <tt>f</tt>
     from <tt>C&lt;L&gt;</tt>
