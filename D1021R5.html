@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+     <style>
+/**
+ * SyntaxHighlighter
+ * http://alexgorbatchev.com/SyntaxHighlighter
+ *
+ * SyntaxHighlighter is donationware. If you are using it, please donate.
+ * http://alexgorbatchev.com/SyntaxHighlighter/donate.html
+ *
+ * @version
+ * 3.0.83 (July 02 2010)
+ * 
+ * @copyright
+ * Copyright (C) 2004-2010 Alex Gorbatchev.
+ *
+ * @license
+ * Dual licensed under the MIT and GPL licenses.
+ */
+.syntaxhighlighter {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt1 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt2 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.highlighted.alt1, .syntaxhighlighter .line.highlighted.alt2 {
+  background-color: #e0e0e0 !important;
+}
+.syntaxhighlighter .line.highlighted.number {
+  color: black !important;
+}
+.syntaxhighlighter table caption {
+  color: black !important;
+}
+.syntaxhighlighter .gutter {
+  color: #afafaf !important;
+}
+.syntaxhighlighter .gutter .line {
+  border-right: 3px solid #6ce26c !important;
+}
+.syntaxhighlighter .gutter .line.highlighted {
+  background-color: #6ce26c !important;
+  color: white !important;
+}
+.syntaxhighlighter.printing .line .content {
+  border: none !important;
+}
+.syntaxhighlighter.collapsed {
+  overflow: visible !important;
+}
+.syntaxhighlighter.collapsed .toolbar {
+  color: blue !important;
+  background: white !important;
+  border: 1px solid #6ce26c !important;
+}
+.syntaxhighlighter.collapsed .toolbar a {
+  color: blue !important;
+}
+.syntaxhighlighter.collapsed .toolbar a:hover {
+  color: red !important;
+}
+.syntaxhighlighter .toolbar {
+  color: white !important;
+  background: #6ce26c !important;
+  border: none !important;
+}
+.syntaxhighlighter .toolbar a {
+  color: white !important;
+}
+.syntaxhighlighter .toolbar a:hover {
+  color: black !important;
+}
+.syntaxhighlighter .plain, .syntaxhighlighter .plain a {
+  color: black !important;
+}
+.syntaxhighlighter .comments, .syntaxhighlighter .comments a {
+  color: #008200 !important;
+}
+.syntaxhighlighter .string, .syntaxhighlighter .string a {
+  color: blue !important;
+}
+.syntaxhighlighter .keyword {
+  color: #006699 !important;
+}
+.syntaxhighlighter .preprocessor {
+  color: gray !important;
+}
+.syntaxhighlighter .variable {
+  color: #aa7700 !important;
+}
+.syntaxhighlighter .value {
+  color: #009900 !important;
+}
+.syntaxhighlighter .functions {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .constants {
+  color: #0066cc !important;
+}
+.syntaxhighlighter .script {
+  font-weight: bold !important;
+  color: #006699 !important;
+  background-color: none !important;
+}
+.syntaxhighlighter .color1, .syntaxhighlighter .color1 a {
+  color: gray !important;
+}
+.syntaxhighlighter .color2, .syntaxhighlighter .color2 a {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .color3, .syntaxhighlighter .color3 a {
+  color: red !important;
+}
+
+.syntaxhighlighter .keyword {
+  font-weight: bold !important;
+}
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+body .syntaxhighlighter .line {
+    white-space: pre !important;
+}
+.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.clo,.opn,.pun{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.kwd,.tag,.typ{font-weight:700}.str{color:#060}.kwd{color:#006}.com{color:#600;font-style:italic}.typ{color:#404}.lit{color:#044}.clo,.opn,.pun{color:#440}.tag{color:#006}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+    </style>
+
+<title>Filling holes in Class Template Argument Deduction</title>
+</head>
+
+<body>
+<p>P1021R4<br>
+Mike Spertus, Symantec<br>
+<a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
+Timur Doumler<br>
+<a href="mailto:papers@timur.audio">papers@timur.audio</a><br>
+Richard Smith<br>
+<a href="mailto:richardsmith@google.com">richardsmith@google.com</a><br>
+2019-06-17<br>
+Audience: Core Working Group
+</p>
+<h1>Filling holes in Class Template Argument Deduction</h1>
+This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0091r3.html">Class Template Argument Deduction</a>.
+
+<h2>Document revision history</h2>
+
+<b>R0</b>, 2018-05-07: Initial version<br>
+<b>R1</b>, 2018-10-07: Refocused paper on filling holes in CTAD<br>
+<b>R2</b>, 2018-11-26: Following EWG guidance, removed proposal for CTAD from partial template argument lists<br>
+<b>R3</b>, 2019-01-21: Add wording and change target to Core Working Group<br>
+<b>R4</b>, 2019-06-17: Updating wording in response to CWG comments
+
+<h2>Rationale</h2>
+As one of us (Timur) has noted when giving public presentations on using
+ class template argument deduction, there are a significant number of 
+cases where it cannot be used. This always deflates the positive 
+feelings from the rest of the talk because it is accurately regarded as 
+artificially inconsistent. In particular, listeners are invariably 
+surprised that it does not work with aggregate templates, type aliases, 
+and inherited constructors.
+    We will show in this paper
+that these limitations can be safely removed. Note that some of these 
+items were intentionally deferred from
+    C++17 with the intent of adding them in C++20. 
+<h2>Class Template Argument Deduction for aggregates</h2>
+We propose that Class Template Argument Deduction works for aggregate initialization as one
+	shouldn't have to choose between having aggregates and deduction. This is well illustrated
+	by the following example:
+<table border="1"><tbody><tr><th>C++17</th><th>Proposed</th></tr>
+<tr><td><div><div id="highlighter_153831" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt;</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">struct</code> <code class="cpp plain">Point { T x; T y; };</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="cpp comments">// Aggregate: Cannot deduce</code></div><div class="line number5 index4 alt2"><code class="cpp plain">Point&lt;</code><code class="cpp color1 bold">double</code><code class="cpp plain">&gt; p{3.0, 4.0};</code></div><div class="line number6 index5 alt1"><code class="cpp plain">Point&lt;</code><code class="cpp color1 bold">double</code><code class="cpp plain">&gt; p2{.x = 3.0, .y = 4.0};</code></div></div></td></tr></tbody></table></div></div></td>    
+    <td><div><div id="highlighter_642490" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt;</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">struct</code> <code class="cpp plain">Point { T x; T y; };</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="cpp comments">// Proposed: Aggregates deduce</code></div><div class="line number5 index4 alt2"><code class="cpp plain">Point p{3.0, 4.0};</code></div><div class="line number6 index5 alt1"><code class="cpp plain">Point p2{.x = 3.0, .y = 4.0};</code></div></div></td></tr></tbody></table></div></div></td>
+    </tr></tbody></table>
+
+For the code on the right hand side to work in C++17, the user would 
+have to write an explicit deduction guide. We believe that this is 
+unnecessary and error-prone boilerplate and that the necessary deduction
+ guide should be implicitly synthesized by the compiler  from the 
+arguments of a braced  or designated initializer during aggregate 
+initialization.
+<h3>Algorithm</h3>
+<p>In the current Working Draft, an aggregate class is defined as a 
+class with no user-declared or inherited constructors, no private or 
+protected non-static data members, no virtual functions, and no virtual,
+ private or protected base classes. While we would like to generate an 
+aggregate deduction guide for class templates 
+    that comply with these rules, we first need to consider the case 
+where there is a dependent base
+    class that may have virtual functions, which would violate the rules
+ for aggregates. Fortunately,
+    that case does not cause a problem because any deduction guides that
+ require one or more arguments
+    will result in a compile-time error after instantiation, and 
+non-aggregate classes without
+    user-declared or inherited constructors generate a zero-argument 
+deduction guide anyway.
+    Based on the above, we can safely generate an aggregate deduction 
+guide for class templates
+    that comply with aggregate rules.    
+
+
+</p><p>When <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0960r1.html">P0960R0</a>
+ was discussed in Rapperswil, it was voted that in order to allow 
+aggregate initialization from a parenthesized list of arguments, 
+aggregate initialization should proceed as if there was a synthesized 
+constructor. We can use the same approach to also synthesize the 
+required additional deduction guide during class template argument
+    deduction as follows:
+
+</p><ol>
+    <li>Given a primary class template <tt>C</tt>, determine whether it satisfies all the conditions for an aggregate class ([dcl.init.aggr]/1.1 - 1.4).</li>
+    <li>If yes, let  <tt>T_1</tt>, ...., <tt>T_n</tt> denote the types of the <tt>N</tt> elements ([dcl.init.aggr]/2) of the aggregate (which may or may not depend on its template arguments).</li>
+    <li>Form a hypothetical constructor <tt>C(T_1, ..., T_N)</tt>. </li>
+    <li>For every constructor argument of type <tt>T_i</tt>, if all types <tt>T_i ... T_n</tt> are default-constructible, add a default argument value zero-initializing the argument as if by <tt>T_i = {}</tt>.</li>
+    <li>For the set of functions and function templates formed for 
+[over.match.class.deduct], add an additional function template derived 
+from this hypothetical constructor as described in 
+[over.match.class.deduct]/1.</li>
+</ol>
+
+There is a slight complication resulting from subaggregates, and the 
+fact that nested braces can be omitted when instantiating them:
+
+<blockquote><div><div id="highlighter_734434" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">struct</code> <code class="cpp plain">Foo { </code><code class="cpp color1 bold">int</code> <code class="cpp plain">x, y; };</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">struct</code> <code class="cpp plain">Bar { Foo f; </code><code class="cpp color1 bold">int</code> <code class="cpp plain">z; };</code></div><div class="line number3 index2 alt2"><code class="cpp plain">Bar bar{1, 2};&nbsp;&nbsp; </code><code class="cpp comments">// Initializes bar.f.x and bar.f.y to 1; zero-initializes bar.z</code></div></div></td></tr></tbody></table></div></div></blockquote>
+
+In this case, we have two initializers, but they do not map to the two elements of the aggregate type <tt>Bar</tt>, instead initializing the sub-elements of the first subaggregate element of type <tt>Foo</tt>. 
+
+<p>For complicated nested aggregates, there are potentially many 
+different combinations of valid mappings of initializers to subaggregate
+ elements. It would be unpractical to create hypothetical constructors 
+for all of those combinations. Additionally, whether or not an aggregate
+ type has subaggregate elements may depend on the template arguments:
+
+</p><blockquote><div><div id="highlighter_611034" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code> <code class="cpp plain">&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">T&gt;</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">struct</code> <code class="cpp plain">Bar { T f; </code><code class="cpp color1 bold">int</code> <code class="cpp plain">z; };&nbsp; </code><code class="cpp comments">// T might be a subaggregate!</code></div></div></td></tr></tbody></table></div></div></blockquote>
+
+This information is not available during class template argument deduction, because for this we first need to deduce <tt>T</tt>.
+ We therefore propose simply to avoid all of these problems by 
+prohibiting the omission of nested braces when performing class template
+ argument deduction.
+
+
+<h2>Class Template Argument Deduction for alias templates</h2>
+While Class Template Argument Deduction makes type inferencing easier 
+when constructing classes,
+it doesn't work for type aliases, penalizing the use of type aliases and
+ creating unnecessary inconsistency.We propose allowing Class Template 
+Argument Deduction for type aliases as in the following example.
+
+    <table border="1"><tbody><tr><th><tt>vector</tt></th><th><tt>pmr::vector</tt> (C++17)</th><th>pmr::vector (proposed)</th></tr>
+<tr>
+    <td>
+<div><div id="highlighter_776658" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">vector v = {1, 2, 3};</code></div><div class="line number2 index1 alt1"><code class="cpp plain">vector v2(cont.begin(), cont.end());</code></div></div></td></tr></tbody></table></div></div>
+    </td>
+    <td><div><div id="highlighter_343467" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pmr::vector&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">&gt; v = {1, 2, 3};</code></div><div class="line number2 index1 alt1"><code class="cpp plain">pmr::vector&lt;decltype(cont)::value_type&gt; v2(cont.begin(), cont.end());</code></div></div></td></tr></tbody></table></div></div>
+    </td>
+<td><div><div id="highlighter_223547" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pmr::vector v = {1, 2, 3};</code></div><div class="line number2 index1 alt1"><code class="cpp plain">pmr::vector v2(cont.begin(), cont.end());</code></div></div></td></tr></tbody></table></div></div>
+</td>
+</tr></tbody></table>
+    <tt>pmr::vector</tt> also serves to illustrate another interesting case. While one might
+    be tempted to write
+    <blockquote><div><div id="highlighter_174382" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">pmr::vector pv({1, 2, 3}, mem_res); </code><code class="cpp comments">// Ill-formed (C++17 and proposed)</code></div></div></td></tr></tbody></table></div></div></blockquote>
+    this example is ill-formed by the normal rules of template argument deduction because
+    <tt>pmr::memory_resource</tt> fails to 
+    deduce <tt>pmr::polymorphic_allocator&lt;int&gt;</tt> in the  second argument. 
+    <p>While this is to be expected, one suspects that had class template argument deduction
+        for alias templates been around when <tt>pmr::vector</tt> was being designed,
+        the committee would have considered allowing such an inference as safe and useful in this context.
+        If that was desired, it could easily have been achieved 
+        by indicating that the <code>pmr::allocator</code> template parameter should be considered non-deducible:
+    </p><blockquote><div><div id="highlighter_550973" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">namespace</code> <code class="cpp plain">pmr {</code></div><div class="line number2 index1 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">T&gt;</code></div><div class="line number3 index2 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">using</code> <code class="cpp plain">vector = std::vector&lt;T, type_identity_t&lt;pmr::polymorphic_allocator&lt;T&gt;&gt;&gt;; </code><code class="cpp comments">// See P0887R1 for type_identity_t</code></div><div class="line number4 index3 alt1"><code class="cpp plain">}</code></div><div class="line number5 index4 alt2"><code class="cpp plain">pmr::vector pv({1, 2, 3}, mem_res); </code><code class="cpp comments">// OK with this definition</code></div></div></td></tr></tbody></table></div></div></blockquote>
+ Finally, in the spirit of alias templates being simply an alias for the type, we do not propose
+allowing the programmer to write explicit deduction guides specifically for an alias
+template.
+<h3>Algorithm</h3>
+For deriving deduction guides for the alias templates from guides in the class, we use the following approach (for which we are very grateful for the invaluable assistance of Richard Smith):
+<ol><li>Deduce template parameters for the deduction guide by deducing the right hand side of
+    the deduction guide from the alias template. We do not require that this deduces all the template
+    parameters as nondeducible contexts may of course occur in general</li>
+    <li>Substitute any deductions made back into the deduction guides. Since the previous step may not
+    have deduced all template parameters of the deduction guide, the new guide may have template
+    parameters from both the type alias and the original deduction guide.</li>
+    <li>Derive the corresponding deduction guide for the alias template by 
+    deducing the alias from the result type. Note that a constraint may be necessary
+    as whether and how to deduce the alias from the result type may depend on the
+    actual argument types.</li>
+    <li>The guide generated from the copy deduction guide should be given
+    the precedence associated with copy deduction guides during overload resolution</li></ol>
+Let us illustrate this process with an example. Consider the following example:
+<blockquote><div><div id="highlighter_41752" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; </code><code class="cpp keyword bold">using</code> <code class="cpp plain">P = pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+Naively using the deduction guides from pair is not ideal because they
+    cannot necessarily deduce objects of type <tt>P</tt> even
+    from arguments that should obviously work, like <tt>P({}, 0)</tt>. However,
+    let us apply the above procedure. The relevant deduction guide is
+<blockquote><div><div id="highlighter_368505" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">A, </code><code class="cpp keyword bold">class</code> <code class="cpp plain">B&gt; pair(A, B) -&gt; pair&lt;A, B&gt;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+Deducing <code>(A, B)</code> from <code>(int, T)</code> yield <code>int</code> for <code>A</code>
+    and <code>T</code> for <code>B</code>. Now substitute back into the deduction guide to get
+    a new deduction guide
+<blockquote><div><div id="highlighter_147664" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; pair(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; pair&lt;</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+Deducing the template arguments for the alias template from this gives us the following deduction guide for the alias template 
+<blockquote><div><div id="highlighter_362756" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code><code class="cpp plain">&lt;</code><code class="cpp keyword bold">class</code> <code class="cpp plain">T&gt; P(</code><code class="cpp color1 bold">int</code><code class="cpp plain">, T) -&gt; P&lt;T&gt;;</code></div></div></td></tr></tbody></table></div></div></blockquote>
+A repository of additional expository materials and worked out examples used in the refinement of this algorithm 
+    is maintained <a href="https://htmlpreview.github.io/?https://github.com/mspertus/CTAD_POST_CPP17/master/CTAD_alias_examples.html">online</a>.
+<h2>Deducing from inherited constructors</h2>
+In C++17, deduction guides (implicit and explicit) are not inherited when constructors are inherited.
+	According to the C++ Core Guidelines <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting">C.52</a>,
+ you should “use inheriting constructors to import constructors into a 
+derived class that does not need further explicit initialization”. As 
+the creator of such a thin wrapper has not asked in any way for the 
+derived class to behave differently under construction, our experience 
+is that users are
+surprised that construction behavior changes:
+<table border="1"><tbody><tr><td colspan="2">
+<div><div id="highlighter_36110" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">template</code> <code class="cpp plain">&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">T&gt; </code><code class="cpp keyword bold">struct</code> <code class="cpp plain">CallObserver requires Invocable&lt;T&gt; { </code></div><div class="line number2 index1 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">CallObserver(T &amp;&amp;) : t(std::forward&lt;T&gt;(t)) {}</code></div><div class="line number3 index2 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">virtual</code> <code class="cpp keyword bold">void</code> <code class="cpp plain">observeCall() { t(); }</code></div><div class="line number4 index3 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp plain">T t;</code></div><div class="line number5 index4 alt2"><code class="cpp plain">};</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="cpp keyword bold">template</code> <code class="cpp plain">&lt;</code><code class="cpp keyword bold">typename</code> <code class="cpp plain">T&gt; </code><code class="cpp keyword bold">struct</code> <code class="cpp plain">CallLogger : </code><code class="cpp keyword bold">public</code> <code class="cpp plain">CallObserver&lt;T&gt; { </code></div><div class="line number8 index7 alt1"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">using</code> <code class="cpp plain">CallObserver&lt;T&gt;::CallObserver; </code></div><div class="line number9 index8 alt2"><code class="cpp spaces">&nbsp;&nbsp;</code><code class="cpp keyword bold">virtual</code> <code class="cpp keyword bold">void</code> <code class="cpp plain">observeCall() override { cout &lt;&lt; </code><code class="cpp string">"calling"</code><code class="cpp plain">; t();&nbsp; }</code></div><div class="line number10 index9 alt1"><code class="cpp plain">};</code></div></div></td></tr></tbody></table></div></div>
+</td></tr>
+<tr><th>C++17</th> <th>Proposed</th></tr>
+<tr><td>
+	<div><div id="highlighter_155720" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">CallObserver observer([]() { </code><code class="cpp comments">/* ... */</code> <code class="cpp plain">}); </code><code class="cpp comments">// OK</code></div><div class="line number2 index1 alt1"><code class="cpp plain">CallLogger&lt;</code><code class="cpp comments">/*????*/</code><code class="cpp plain">&gt; logger([]() { </code><code class="cpp comments">/* ... */</code> <code class="cpp plain">});</code></div></div></td></tr></tbody></table></div></div>
+</td>
+<td><div><div id="highlighter_787208" class="syntaxhighlighter nogutter  cpp"><div class="toolbar"><span><a href="#" class="toolbar_item command_help help">?</a></span></div><table cellspacing="0" cellpadding="0" border="0"><tbody><tr><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">CallObserver observer([]() { </code><code class="cpp comments">/* ... */</code> <code class="cpp plain">}); </code><code class="cpp comments">// OK</code></div><div class="line number2 index1 alt1"><code class="cpp plain">CallLogger logger([]() { </code><code class="cpp comments">/* ... */</code> <code class="cpp plain">}); </code><code class="cpp comments">// Now OK</code></div></div></td></tr></tbody></table></div></div>
+    </td></tr></tbody></table>
+Note that inheriting the constructors of a base class must include 
+inheriting all the deduction guides, not just the implicit ones. As a 
+number of standard library
+writers use explicit guides to behave “as-if” their classes were defined
+ as in the standard, such internal implementation details
+details would become visible if only the internal guides were inherited.
+ We of course use the same algorithm
+    for determining deduction guides for the base class template as 
+described above for alias templates.
+<h2>Wording</h2>
+<p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
+
+<blockquote>
+  <ul>
+    <li>[…]</li>
+    <li>For each <em>deduction-guide</em>, […]
+      <ul>
+        <li>The template parameters, if any, […]</li>
+        <li>The return type […]</li>
+      </ul>
+    </li>
+  </ul>
+	<p><ins>In addition, if <tt>C</tt> satisfies the conditions for an aggregate class with the assumption that any dependent base class has no virtual functions and no virtual base classes, let <em>e<sub>1</sub>, ... e<sub>n</sub></em> be the elements of <tt>C</tt> ([dcl.init.aggr]). 
+		If there is at least one such element, and the initializer is a non-empty <em>braced-init-list</em> or parenthesized <em>expression-list</em>, the set contains an additional function template, called the aggregate deduction candidate, defined as follows. Let <em>x<sub>1</sub>, ..., x<sub>m</sub></em> 
+		be the elements of the <em>initializer-list</em>, <em>designated-initializer-list</em>, or <em>expression-list</em>. The aggregate deduction candidate is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, ..., T<sub>m</sub>)</tt>, where <tt>T<sub>i</sub></tt> is the declared type of the element <em>e<sub>i</sub></em> of <tt>C</tt> which would be explicitly initialized by <em>x<sub>i</sub></em> as described in [dcl.init.aggr].
+	  
+
+      <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
+        from a base
+        class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
+          the set contains the functions
+      and function templates formed from an
+        alias template (over.match.alias.deduct) whose template parameters are those of <tt>C</tt>
+        and whose <em>simple-template-id</em> is <tt>B</tt>.</ins></p></ins>
+</blockquote>
+
+Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
+<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
+	<em>template-name</em> names an alias template <tt>A</tt> 
+	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
+    naming a specialization of a class template <tt>C</tt> with 
+    template argument list <em>L</em>, a
+	set of functions and function templates is formed as follows. For each function or function
+	template <tt>f</tt> formed for <tt>C</tt> by the process in 
+    (over.match.class.deduct 11.3.1.8), form a function or function
+	template <tt>f'</tt> according to the following procedure:
+	<ul><li>Deduce the arguments of the return type of <tt>f</tt>
+    from <tt>C&lt;L&gt;</tt>
+	according to the process in (temp.deduct.type) with the exception that deduction does
+	not fail if not all template arguments are deduced.</li>
+		<li>Form <tt>f'</tt> as follows:
+		<ul><li>The parameters and return type are constructed by  substituting the deductions
+			of all template parameters that were successfully deduced in the deduction of 
+			the return type of <tt>f</tt>
+			 into 
+			the parameters (including default arguments) and return type of <tt>f</tt>.</li>
+		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>A</tt> (including default arguments)
+			that appear in the parameters and return type constructed in the previous step.</li>
+		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of the associated constraints
+			of <tt>f</tt> and a constraint that is 
+            satisfied if and only if the arguments of <tt>A</tt>
+			are deducible (see below) from the return type.</li>
+			<li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
+                is considered to be so as well.</li>
+            <li>
+			If <tt>f</tt> was generated from a <em>deduction-guide</em> (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
+                is considered to be so as well.</li>
+                <li>If <tt>f</tt> was generated from a constructor or <em>deduction-guide</em>
+				with an <em>explicit-specifier</em>, then
+                    <tt>f'</tt> is considered to have the same as well.</li></ul></li></ul>
+		
+    The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
+<blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
+
+    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
+<p>
+	Initialization and overload resolution are performed as described in 
+    (dcl.init 9.3) and (over.match.ctor 11.3.1.3), 
+    (over.match.copy 11.3.1.4), or (over.match.list 11.3.1.7) (as
+appropriate for the type of initialization performed) for an object of a hypothetical class type, where the
+selected functions and function templates are considered to be the constructors of that class type for the
+purpose of forming an overload set, and the initializer is provided by the context in which class template
+argument deduction was performed. As an exception, the first phase in 11.3.1.7 (considering initializer-list
+constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
+	where <tt>U</tt> is a specialization of <tt>C</tt> or a class derived from a specialization of <tt>C</tt>.
+	If the function or 
+	function template was generated from a constructor or <em>deduction-guide</em>
+that had an <em>explicit-specifier</em>, each such notional constructor is considered to
+	have that same <em>explicit-specifier</em>. All such notional constructors are considered 
+	to be public members of the hypothetical class type. [<em>Note:</em> The constraint ensures that
+	a specialization of <tt>A</tt> can be deduced from the return type. <em>&mdash; end note</em>]
+	<br/>
+	[<em>Example:</em><pre>
+	template &lt;class T, class U&gt; struct C {
+	  C(T, U);
+	};
+	template&lt;class T, class U&gt;
+	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	
+	template&lt;class V&gt;
+	using A = C&lt;V *, V *&gt;;
+	
+	int i{};
+	double d{};
+	A a1(&amp;i, &amp;i); // Deduces <em>A&lt;int&gt;</em>
+	A a2(i, i); // <em>Error: cannot deduce V * from i</em>
+	A a3(&amp;i, &amp;d); // <em>Error: cannot deduce alias template from C&lt;int *, double *&gt; </em>
+	</pre>
+    Possible exposition only implementation of the above procedure:
+	<pre>        //<em>The following concept ensures a specialization of A is deduced</em>
+        template &lt;class&gt; class AA;
+        template &lt;class V&gt; class AA&lt;A&lt;V&gt;&gt; { };
+        template &lt;class T&gt; concept deduces_A = requires { sizeof(AA&lt;T&gt;); };
+        
+        // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
+        template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+	
+	// <em>f' is obtained by transforming f as described by the above procedure</em>
+	template&lt;class V, class U&gt; 
+	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;
+	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+	</pre>
+
+	<em>&mdash; end example</em>]
+		</ins></blockquote>
+Insert a bullet after over.match.best/1.9 as follows
+	<blockquote><ins>
+	<ul><li><tt>F1</tt> is generated from class template argument deduction (over.match.class.deduct 11.3.1.8) for
+		a class <tt>D</tt>, <tt>F2</tt> is generated from inheriting constructors from
+		a base class of <tt>D</tt>, and for all arguments the corresponding
+		parameters of <tt>F1</tt> and <tt>F2</tt> have the same type, or if not that,</li></ul></ins></blockquote>
+
+    <script type="text/javascript">
+	SyntaxHighlighter.defaults['gutter'] = false;
+     SyntaxHighlighter.all()
+</script>
+	</body></html>
