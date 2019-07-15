@@ -420,13 +420,13 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
 	
 	template&lt;class V&gt;
-	using A = C&lt;V *, V *&gt;;
+	using A = C&lt;V *, V&gt;;
 	
 	int i{};
 	double d{};
-	A a1(&amp;i, &amp;i); // Deduces <em>A&lt;int&gt;</em>
-	A a2(i, i); // <em>Error: cannot deduce V * from i</em>
-	A a3(&amp;i, &amp;d); // <em>Error: cannot deduce alias template from C&lt;int *, double *&gt; </em>
+	A a1(&amp;i, i); // Deduces <em>A&lt;int&gt;</em>
+	A a3(&amp;d, i); // Deduces <em>A&lt;double&gt;</em>
+	A a2(&amp;i, &amp;i); // <em>Error: cannot deduce alias template from C&lt;int *, int *&gt;</em>
 	</pre>
     Possible exposition only implementation of the above procedure:
 	<pre>        //<em>The following concept ensures a specialization of A is deduced</em>
@@ -436,7 +436,8 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
         
         // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
         template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
-	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V&gt;
+        // deduces V * for T but does not deduce U</em>
 	
 	// <em>f' is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
