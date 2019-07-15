@@ -160,28 +160,24 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
     (over.match.class.deduct or over.match.alias.deduct), 
     form a function or function
 	template <tt>f'</tt> according to the following procedure:
-	<ul><li>Deduce the arguments of the return type of <tt>f</tt>
+	<ul><li>Deduce the template arguments of the return type of <tt>f</tt>
     from <tt>C&lt;L&gt;</tt>
 	according to the process in (temp.deduct.type) with the exception that deduction does
 	not fail if not all template arguments are deduced.</li>
-		<li>Form <tt>f'</tt> as follows:
-		<ul><li>Initially, f' is the result of 
-            substituting the deductions
-			of all template parameters that were successfully deduced in the deduction of the return type of <tt>f</tt>
-			 into <tt>f</tt>.</li>
-		<li>Add the template parameters of <tt>A</tt> (including
-            default arguments) to the beginning of the template
-            parameter list. Next, remove any template parameters
-            that do not appear in the <em>declaration</em> or 
-            associated constraints (temp.constr.decl 12.4.2)
-            of <tt>f'</tt>. If, after this, any template parameters
-            appear in default arguments of template parameters, then
-            restore those parameters to the template parameter list.</li>
+		<li>Form the function template <tt>f'</tt> as follows:
+		<ul>
+            <li>The <em>declarator</em> of <tt>f'</tt> is 
+            the result of 
+            substituting the above deductions into the
+                <em>declarator</em> of <tt>f</tt>.</li>
+		<li>The template parameter list of <tt>f'</tt>
+            consists of all the template parameters of <tt>A</tt>
+            that appear in the above deductions followed by
+            the template parameters of <tt>f</tt> that were
+            not deduced.</li>
         
-		<li>Add an associated constraint to <tt>f'</tt> that is 
-            satisfied if and only if the arguments of <tt>A</tt>
-			are deducible (see below) from the return type.</li>
-			<li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
+		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of substituting the above deductions into the associated constraints of <tt>f</tt> and a constraint that is satisfied if and only if the arguments of <tt>A</tt> are deducible (see below) from the return type.</li>
+        <li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
                 is considered to be so as well.</li>
             <li>
 			If <tt>f</tt> was generated from a <em>deduction-guide</em> (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
