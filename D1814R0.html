@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+     <style>
+/**
+ * SyntaxHighlighter
+ * http://alexgorbatchev.com/SyntaxHighlighter
+ *
+ * SyntaxHighlighter is donationware. If you are using it, please donate.
+ * http://alexgorbatchev.com/SyntaxHighlighter/donate.html
+ *
+ * @version
+ * 3.0.83 (July 02 2010)
+ * 
+ * @copyright
+ * Copyright (C) 2004-2010 Alex Gorbatchev.
+ *
+ * @license
+ * Dual licensed under the MIT and GPL licenses.
+ */
+.syntaxhighlighter {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt1 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.alt2 {
+  background-color: white !important;
+}
+.syntaxhighlighter .line.highlighted.alt1, .syntaxhighlighter .line.highlighted.alt2 {
+  background-color: #e0e0e0 !important;
+}
+.syntaxhighlighter .line.highlighted.number {
+  color: black !important;
+}
+.syntaxhighlighter table caption {
+  color: black !important;
+}
+.syntaxhighlighter .gutter {
+  color: #afafaf !important;
+}
+.syntaxhighlighter .gutter .line {
+  border-right: 3px solid #6ce26c !important;
+}
+.syntaxhighlighter .gutter .line.highlighted {
+  background-color: #6ce26c !important;
+  color: white !important;
+}
+.syntaxhighlighter.printing .line .content {
+  border: none !important;
+}
+.syntaxhighlighter.collapsed {
+  overflow: visible !important;
+}
+.syntaxhighlighter.collapsed .toolbar {
+  color: blue !important;
+  background: white !important;
+  border: 1px solid #6ce26c !important;
+}
+.syntaxhighlighter.collapsed .toolbar a {
+  color: blue !important;
+}
+.syntaxhighlighter.collapsed .toolbar a:hover {
+  color: red !important;
+}
+.syntaxhighlighter .toolbar {
+  color: white !important;
+  background: #6ce26c !important;
+  border: none !important;
+}
+.syntaxhighlighter .toolbar a {
+  color: white !important;
+}
+.syntaxhighlighter .toolbar a:hover {
+  color: black !important;
+}
+.syntaxhighlighter .plain, .syntaxhighlighter .plain a {
+  color: black !important;
+}
+.syntaxhighlighter .comments, .syntaxhighlighter .comments a {
+  color: #008200 !important;
+}
+.syntaxhighlighter .string, .syntaxhighlighter .string a {
+  color: blue !important;
+}
+.syntaxhighlighter .keyword {
+  color: #006699 !important;
+}
+.syntaxhighlighter .preprocessor {
+  color: gray !important;
+}
+.syntaxhighlighter .variable {
+  color: #aa7700 !important;
+}
+.syntaxhighlighter .value {
+  color: #009900 !important;
+}
+.syntaxhighlighter .functions {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .constants {
+  color: #0066cc !important;
+}
+.syntaxhighlighter .script {
+  font-weight: bold !important;
+  color: #006699 !important;
+  background-color: none !important;
+}
+.syntaxhighlighter .color1, .syntaxhighlighter .color1 a {
+  color: gray !important;
+}
+.syntaxhighlighter .color2, .syntaxhighlighter .color2 a {
+  color: #ff1493 !important;
+}
+.syntaxhighlighter .color3, .syntaxhighlighter .color3 a {
+  color: red !important;
+}
+
+.syntaxhighlighter .keyword {
+  font-weight: bold !important;
+}
+.syntaxhighlighter div.toolbar span a.toolbar_item{
+   display: none !important;
+} 
+body .syntaxhighlighter .line {
+    white-space: pre !important;
+}
+.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.clo,.opn,.pun{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.kwd,.tag,.typ{font-weight:700}.str{color:#060}.kwd{color:#006}.com{color:#600;font-style:italic}.typ{color:#404}.lit{color:#044}.clo,.opn,.pun{color:#440}.tag{color:#006}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+    </style>
+
+<title>Wording for Class Template Argument Deduction for Alias Templates and Inherited Constructors</title>
+</head>
+
+<body>
+<p>D1814R0<br>
+Mike Spertus, Symantec<br>
+
+Audience: Core Working Group
+</p>
+<h1>Wording for Class Template Argument Deduction for Alias Templates and Inherited Constructors
+</h1>
+This paper provides wording for the Alias Template and Inheriting Constructors Class Template Argument Deduction support from 
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1021r4.html">P1021R4</a>.
+
+<h2>Document revision history</h2>
+
+<b>R0</b>, 2019-07-15: Split from P1021R4<br>
+
+<h2>Wording</h2>
+
+Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
+<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
+	<em>template-name</em> names an alias template <tt>A</tt> 
+	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
+    naming a specialization of a class template or alias template
+    <tt>C</tt> with 
+    template argument list <em>L</em>, a
+	set of functions and function templates is formed as follows. For each function or function
+	template <tt>f</tt> formed for <tt>C</tt> by the process in 
+    (over.match.class.deduct or over.match.alias.deduct), 
+    form a function or function
+	template <tt>f'</tt> according to the following procedure:
+	<ul><li>Deduce the arguments of the return type of <tt>f</tt>
+    from <tt>C&lt;L&gt;</tt>
+	according to the process in (temp.deduct.type) with the exception that deduction does
+	not fail if not all template arguments are deduced.</li>
+		<li>Form <tt>f'</tt> as follows:
+		<ul><li>Initially, f' is the result of 
+            substituting the deductions
+			of all template parameters that were successfully deduced in the deduction of the return type of <tt>f</tt>
+			 into <tt>f</tt>.</li>
+		<li>Add the template parameters of <tt>A</tt> (including
+            default arguments) to the beginning of the template
+            parameter list. Next, remove any template parameters
+            that do not appear in the <em>declaration</em> or 
+            associated constraints (temp.constr.decl 12.4.2)
+            of <tt>f'</tt>. If, after this, any template parameters
+            appear in default arguments of template parameters, then
+            restore those parameters to the template parameter list.</li>
+        
+		<li>Add an associated constraint to <tt>f'</tt> that is 
+            satisfied if and only if the arguments of <tt>A</tt>
+			are deducible (see below) from the return type.</li>
+			<li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
+                is considered to be so as well.</li>
+            <li>
+			If <tt>f</tt> was generated from a <em>deduction-guide</em> (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
+                is considered to be so as well.</li>
+                <li>If <tt>f</tt> was generated from a constructor or <em>deduction-guide</em>
+				with an <em>explicit-specifier</em>, then
+                    <tt>f'</tt> is considered to have the same as well.</li></ul></li></ul>
+		
+    The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
+<blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
+
+    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
+<p>
+	Initialization and overload resolution are performed as described in 
+    (dcl.init 9.3) and (over.match.ctor 11.3.1.3), 
+    (over.match.copy 11.3.1.4), or (over.match.list 11.3.1.7) (as
+appropriate for the type of initialization performed) for an object of a hypothetical class type, where the
+selected functions and function templates are considered to be the constructors of that class type for the
+purpose of forming an overload set, and the initializer is provided by the context in which class template
+argument deduction was performed. As an exception, the first phase in 11.3.1.7 (considering initializer-list
+constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
+	where <tt>U</tt> is a specialization of <tt>D</tt> or a class derived from a specialization of <tt>D</tt>, where <tt>D</tt> is the class
+    template with the property that <tt>C&lt;L&gt;</tt> is a 
+    specialization of <tt>D</tt>.
+    [<em>Note:</em> if <tt>C</tt> is a class template, then the
+    class template <tt>D</tt> will simply be <tt>C</tt>.]
+	If the function or 
+	function template was generated from a constructor or <em>deduction-guide</em>
+that had an <em>explicit-specifier</em>, each such notional constructor is considered to
+	have that same <em>explicit-specifier</em>. All such notional constructors are considered 
+	to be public members of the hypothetical class type. [<em>Note:</em> The constraint ensures that
+	a specialization of <tt>A</tt> can be deduced from the return type. <em>&mdash; end note</em>]
+	<br/>
+	[<em>Example:</em><pre>
+	template &lt;class T, class U&gt; struct C {
+	  C(T, U);
+	};
+	template&lt;class T, class U&gt;
+	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	
+	template&lt;class V&gt;
+	using A = C&lt;V *, V *&gt;;
+	
+	int i{};
+	double d{};
+	A a1(&amp;i, &amp;i); // Deduces <em>A&lt;int&gt;</em>
+	A a2(i, i); // <em>Error: cannot deduce V * from i</em>
+	A a3(&amp;i, &amp;d); // <em>Error: cannot deduce alias template from C&lt;int *, double *&gt; </em>
+	</pre>
+    Possible exposition only implementation of the above procedure:
+	<pre>        //<em>The following concept ensures a specialization of A is deduced</em>
+        template &lt;class&gt; class AA;
+        template &lt;class V&gt; class AA&lt;A&lt;V&gt;&gt; { };
+        template &lt;class T&gt; concept deduces_A = requires { sizeof(AA&lt;T&gt;); };
+        
+        // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
+        template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+	
+	// <em>f' is obtained by transforming f as described by the above procedure</em>
+	template&lt;class V, class U&gt; 
+	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;
+	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+	</pre>
+
+	<em>&mdash; end example</em>]
+		</ins></blockquote>
+Insert a bullet after over.match.best/1.9 as follows
+	<blockquote><ins>
+	<ul><li><tt>F1</tt> is generated from class template argument deduction (over.match.class.deduct 11.3.1.8) for
+		a class <tt>D</tt>, <tt>F2</tt> is generated from inheriting constructors from
+		a base class of <tt>D</tt>, and for all arguments the corresponding
+		parameters of <tt>F1</tt> and <tt>F2</tt> have the same type, or if not that,</li></ul></ins></blockquote>
+
+    <script type="text/javascript">
+	SyntaxHighlighter.defaults['gutter'] = false;
+     SyntaxHighlighter.all()
+</script>
+	</body></html>

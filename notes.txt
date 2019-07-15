@@ -1,0 +1,16 @@
+What if
+
+template<class T>
+class C;
+template<class T>
+using A = C<T*>;
+template<class T>
+using B = A<T*>;
+?
+
+Conditionally explicit
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0892r2.html
+
+Can copy constructor be explicit?
+
+https://ml-threat-detection.awssecworkshops.com/

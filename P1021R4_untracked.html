@@ -132,14 +132,14 @@ body .syntaxhighlighter .line {
 </head>
 
 <body>
-<p>D1021R5<br>
+<p>P1021R4<br>
 Mike Spertus, Symantec<br>
 <a href="mailto:mike_spertus@symantec.com">mike_spertus@symantec.com</a><br>
 Timur Doumler<br>
 <a href="mailto:papers@timur.audio">papers@timur.audio</a><br>
 Richard Smith<br>
 <a href="mailto:richardsmith@google.com">richardsmith@google.com</a><br>
-2019-07-15<br>
+2019-03-11<br>
 Audience: Core Working Group
 </p>
 <h1>Filling holes in Class Template Argument Deduction</h1>
@@ -150,9 +150,8 @@ This paper proposes filling several gaps in <a href="http://www.open-std.org/jtc
 <b>R0</b>, 2018-05-07: Initial version<br>
 <b>R1</b>, 2018-10-07: Refocused paper on filling holes in CTAD<br>
 <b>R2</b>, 2018-11-26: Following EWG guidance, removed proposal for CTAD from partial template argument lists<br>
-<b>R3</b>, 2019-01-21: Add wording and change target to Core Working Group<br>
-<b>R4</b>, 2019-06-17: Updating wording in response to CWG comments
-
+<b>R3</b>, 2019-01-21: Add wording and change target to Core Working Group
+<b>R4</b>, 2019-03-11: Modified wording to reflect latest feedback from CWG provided in Kona.
 <h2>Rationale</h2>
 As one of us (Timur) has noted when giving public presentations on using
  class template argument deduction, there are a significant number of 
@@ -342,11 +341,22 @@ described above for alias templates.
       </ul>
     </li>
   </ul>
-	<p><ins>In addition, if <tt>C</tt> satisfies the conditions for an aggregate class with the assumption that any dependent base class has no virtual functions and no virtual base classes, let <em>e<sub>1</sub>, ... e<sub>n</sub></em> be the elements of <tt>C</tt> ([dcl.init.aggr]). 
-		If there is at least one such element, and the initializer is a non-empty <em>braced-init-list</em> or parenthesized <em>expression-list</em>, the set contains an additional function template, called the aggregate deduction candidate, defined as follows. Let <em>x<sub>1</sub>, ..., x<sub>m</sub></em> 
-		be the elements of the <em>initializer-list</em>, <em>designated-initializer-list</em>, or <em>expression-list</em>. The aggregate deduction candidate is derived as above from a hypothetical constructor <tt>C(T<sub>1</sub>, ..., T<sub>m</sub>)</tt>, where <tt>T<sub>i</sub></tt> is the declared type of the element <em>e<sub>i</sub></em> of <tt>C</tt> which would be explicitly initialized by <em>x<sub>i</sub></em> as described in [dcl.init.aggr].
-	  
-
+  <p><ins>In addition, if <tt>C</tt> satisfies the
+  conditions for an aggregate class with the assumption that
+  any dependent base class has no virtual functions and no virtual
+  base classes, and if there is at least one element of <tt>C</tt>
+  ([dcl.init.aggr]), the set contains
+  an additional function template,
+  called the aggregate deduction candidate, defined as follows.
+  Let <tt>T</tt><sub>1</sub>, …, <tt>T</tt><sub><em>n</em></sub> be the
+  declared types of the elements of <tt>C</tt>.
+  The aggregate deduction candidate is derived as above from a
+  hypothetical constructor <tt>C(T</tt><sub>1</sub>, …,
+  <tt>T</tt><sub><em>n</em></sub><tt>)</tt>.
+  Additionally, for each integer 1&nbsp;≤&nbsp;<em>i</em>&nbsp;≤&nbsp;<em>n</em>,
+  if the types <tt>T</tt><sub><em>i</em></sub>, …, <tt>T</tt><sub><em>n</em></sub> are all
+  dependent or default-constructible, the <em>i</em><sup>th</sup> parameter of this function template
+      has a default argument of the form <tt>T<sub>i</sub>{}</tt>.
       <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
         class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
@@ -360,33 +370,32 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 <blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-    naming a specialization of a class template or alias template
-    <tt>C</tt> with 
+    naming a specialization of a class template <tt>C</tt> with 
     template argument list <em>L</em>, a
 	set of functions and function templates is formed as follows. For each function or function
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
-    (over.match.class.deduct or over.match.alias.deduct), 
-    form a function or function
+    (over.match.class.deduct 11.3.1.8), form a function or function
 	template <tt>f'</tt> according to the following procedure:
-	<ul><li>Deduce the arguments of the return type of <tt>f</tt>
-    from <tt>C&lt;L&gt;</tt>
-	according to the process in (temp.deduct.type) with the exception that deduction does
-	not fail if not all template arguments are deduced.</li>
+	<ul><li>Form a hypothetical function or function template <tt>g</tt> where
+		<ul><li>the template parameters, if
+			any, are the template parameters of <tt>f</tt> (including default template arguments),</li>
+			<li>the single parameter type is an rvalue reference to the result
+			type of <tt>f</tt>, and</li>
+		<li>the return type is void.</li></ul>
+		<li>Perform template argument deduction (temp.deduct 12.9.2) on a
+            function call of <tt>g</tt> with a single prvalue
+            argument of type <tt>C&lt;<em>L</em>&gt;</tt> with the exception that deduction does
+	not fail if not all template parameters of <tt>g</tt> are deduced.</li>
 		<li>Form <tt>f'</tt> as follows:
-		<ul><li>Initially, f' is the result of 
-            substituting the deductions
-			of all template parameters that were successfully deduced in the deduction of the return type of <tt>f</tt>
-			 into <tt>f</tt>.</li>
-		<li>Add the template parameters of <tt>A</tt> (including
-            default arguments) to the beginning of the template
-            parameter list. Next, remove any template parameters
-            that do not appear in the <em>declaration</em> or 
-            associated constraints (temp.constr.decl 12.4.2)
-            of <tt>f'</tt>. If, after this, any template parameters
-            appear in default arguments of template parameters, then
-            restore those parameters to the template parameter list.</li>
-        
-		<li>Add an associated constraint to <tt>f'</tt> that is 
+		<ul><li>The parameters and return type are constructed by  substituting 
+			 into 
+			the parameters (including default arguments) and return type of <tt>f</tt>
+			the deductions
+			of all template parameters that were successfully deduced in the deduction of <tt>g</tt>.</li>
+		<li>The template parameters consist of those template parameters of <tt>f</tt> or <tt>g</tt>
+			that appear in the parameters and return type constructed in the previous step.</li>
+		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of the associated constraints
+			of <tt>f</tt> and a constraint that is 
             satisfied if and only if the arguments of <tt>A</tt>
 			are deducible (see below) from the return type.</li>
 			<li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
@@ -396,12 +405,12 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
                 is considered to be so as well.</li>
                 <li>If <tt>f</tt> was generated from a constructor or <em>deduction-guide</em>
 				with an <em>explicit-specifier</em>, then
-                    <tt>f'</tt> is considered to have the same as well.</li></ul></li></ul>
+                    <tt>f'</tt> is considered to be so as well.</li></ul></li></ul>
 		
     The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
 <blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
 
-    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
+    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type 12.7.2.1), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
 <p>
 	Initialization and overload resolution are performed as described in 
     (dcl.init 9.3) and (over.match.ctor 11.3.1.3), 
@@ -411,11 +420,7 @@ selected functions and function templates are considered to be the constructors 
 purpose of forming an overload set, and the initializer is provided by the context in which class template
 argument deduction was performed. As an exception, the first phase in 11.3.1.7 (considering initializer-list
 constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
-	where <tt>U</tt> is a specialization of <tt>D</tt> or a class derived from a specialization of <tt>D</tt>, where <tt>D</tt> is the class
-    template with the property that <tt>C&lt;L&gt;</tt> is a 
-    specialization of <tt>D</tt>.
-    [<em>Note:</em> if <tt>C</tt> is a class template, then the
-    class template <tt>D</tt> will simply be <tt>C</tt>.]
+	where <tt>U</tt> is a specialization of <tt>C</tt> or a class derived from a specialization of <tt>C</tt>.
 	If the function or 
 	function template was generated from a constructor or <em>deduction-guide</em>
 that had an <em>explicit-specifier</em>, each such notional constructor is considered to
@@ -447,7 +452,8 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
         
         // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
         template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
-	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+	template&lt;class T, class U> void g(C&lt;T, std::type_identity_t&lt;U&gt;&gt;&amp;&amp;);
+	// <em>Template argument deduction of g(C&lt;V *, V *&gt;{}) deduces T as V *</em>
 	
 	// <em>f' is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
