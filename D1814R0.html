@@ -152,9 +152,9 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
 <blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-    naming a specialization of a class template or alias template
-    <tt>C</tt> with 
-    template argument list <em>L</em>, a
+    naming a specialization of a template
+    <tt>C</tt> with template argument list <em>L</em> denoting
+    a type that is a specialization of class template <tt>D</tt>, a
 	set of functions and function templates is formed as follows. For each function or function
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
     (over.match.class.deduct or over.match.alias.deduct), 
@@ -199,11 +199,7 @@ selected functions and function templates are considered to be the constructors 
 purpose of forming an overload set, and the initializer is provided by the context in which class template
 argument deduction was performed. As an exception, the first phase in 11.3.1.7 (considering initializer-list
 constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
-	where <tt>U</tt> is a specialization of <tt>D</tt> or a class derived from a specialization of <tt>D</tt>, where <tt>D</tt> is the class
-    template with the property that <tt>C&lt;L&gt;</tt> is a 
-    specialization of <tt>D</tt>.
-    [<em>Note:</em> if <tt>C</tt> is a class template, then the
-    class template <tt>D</tt> will simply be <tt>C</tt>.]
+	where <tt>U</tt> is a specialization of <tt>D</tt> or a class derived from a specialization of <tt>D</tt>.
 	If the function or 
 	function template was generated from a constructor or <em>deduction-guide</em>
 that had an <em>explicit-specifier</em>, each such notional constructor is considered to
