@@ -156,7 +156,11 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
     <em>template-name</em> of the <em>simple-template-id</em> names a class template
     of an alias template that in turn meets these requirements.
 </blockquote>
-<p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
+<p>In over.match.class.deduct, modify the beginning of paragraph 1 as follows:</p>
+<blockquote>When resolving a placeholder for a deduced class type (9.1.7.6) where the
+<em>template-name</em> names a primary class template of C a set of functions and function templates<ins>, called the 
+<em>guides</em> of <em>C</em>,</ins> is formed comprising:</blockquote>
+<p>In over.match.class.deduct, append after paragraph 1 as follows:</p>
 <blockquote><ul><ul><li>The return type is the <em>simple-template-id</em> of the
 <em>deduction-guide</em>.</li></ul></ul>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
@@ -167,13 +171,13 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
     a placeholder for a deduced class type, then the set contains the functions
       and function templates formed from that alias template by 
     applying the procedure below.</ins></p>
+    
     <ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-     <tt>B&lt;L&gt;</tt>, a
-	set of function or function templates is formed as follows. For each function or function
-	template <tt>f</tt> formed  by applying the process in 
-    this subclause to <tt>B</tt> (as opposed to <tt>A</tt>), 
+     <tt>B&lt;L&gt;</tt>, the guides of A are the
+	set of function or function templates formed as follows. For each function or function
+	template <tt>f</tt> in the guides of <tt>B</tt> (as opposed to <tt>A</tt>), 
     form a function or function template <tt>f'</tt> according to the
         following procedure and add it to the set:
 	<ul><li>Deduce the template arguments of the return type of <tt>f</tt>
@@ -206,11 +210,23 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
 
     with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argumentIlist is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
     </ins><p>
-	<p></p>
-    Initialization and overload resolution are performed as described in 
+	<p>Initialization and overload resolution are performed as described in 
     (dcl.init 9.3) and (over.match.ctor 12.3.1.3), 
     (over.match.copy 12.3.1.4), or (over.match.list 12.3.1.7) (as
-    appropriate for the type of initialization performed) for an object of a hypothetical class type, ...</p></blockquote> 
+appropriate for the type of initialization performed) for an object of a hypothetical class type, where the
+guides of the templates named by the placeholder are considered to be the 
+    constructors of that class type for the
+purpose of forming an overload set, and the initializer is provided by the context in which class template
+argument deduction was performed. As an exception, the first phase in 12.3.1.7 (considering initializer-list
+constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
+	where <tt>U</tt> is a specialization of <del><tt>C</tt></del>
+        <ins>the class template for which the placeholder names a specialization</ins> or a class derived from <del>a specialization of <tt>C</tt></del><ins>therefrom</ins>.
+	If the function or 
+	function template was generated from a constructor or <em>deduction-guide</em>
+that had an <em>explicit-specifier</em>, each such notional constructor is considered to
+	have that same <em>explicit-specifier</em>. All such notional constructors are considered 
+	to be public members of the hypothetical class type.</p>
+  </blockquote> 
 	Add the following example to the end of over.match.class.deduct
 	<blockquote><blockquote><tt>B b{(int*)0, (char*)0};
 // OK, deduces B&lt;char*&gt;</tt></blockquote>
@@ -224,8 +240,8 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
 	
 	template&lt;class V&gt;
 	using A = C&lt;V *, V *&gt;;
-        template&lt;class W&gt;
-        using B = A&lt;W&gt; requires Integral&lt;W&gt;;
+        template&lt;std::Integral W&gt;
+        using B = A&lt;W&gt;;
 	
 	int i{};
 	double d{};
@@ -249,29 +265,31 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
 	
 	// <em>f' is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
-	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;
-	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+    	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;
+	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;;
          
         // <em>Likewise, f2 is formed from the C(T, U) constructor of C,</em>
         // <em>generating the following function template</em>
-  	auto f2_prime(V *, V*) -&gt; C&lt;V *, V *&gt;
-	  requires deduces_A&lt;C&lt;V *, V *&gt;&gt;;
+        template&lt;class V&gt;
+        requires deduces_A&lt;C&lt;V *, V *&gt;&gt;
+  	auto f2_prime(V *, V*) -&gt; C&lt;V *, V *&gt;;
+	  
    
         // <em>The following concept ensures a specialization a B is deduced</em>
         template &lt;class&gt; class BB;
         template &lt;class V&gt; class BB&lt;B&lt;V&gt;&gt; { };
         template &lt;class T&gt; concept deduces_B = requires { sizeof(BB&lt;T&gt;); };
         
-        // <em>f2 is formed from the C(T, U) constructor of C</em>
-        
         // The function templates for B derived from the above f' and f2' for A is
- 	template&lt;class W, class U&gt; 
-	auto f_prime_for_B(W *, U) -&gt; C&lt;W *, std::type_identity_t&lt;U&gt;&gt;
+ 	template&lt;std::Integral W, class U&gt; 
 	  requires deduces_A&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;
-                &amp;&amp; deduces_B&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;;
-	auto f2_prime_for_B(T, U) -&gt; C&lt;T, U&gt;
-	  requires deduces_A&lt;C&lt;T, U&gt;&gt;&gt;
-                &amp;&amp; deduces_B&lt;C&lt;T, U&gt;&gt;&gt;;
+                &amp;&amp; deduces_B&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;
+	auto f_prime_for_B(W *, U) -&gt; C&lt;W *, std::type_identity_t&lt;U&gt;&gt;;
+    
+      template&lt;std::Integral W&gt;
+	  requires deduces_A&lt;C&lt;W *, W *&gt;&gt;
+                &amp;&amp; deduces_B&lt;C&lt;W *, W *&gt;&gt;
+	auto f2_prime_for_B(W *, W *) -&gt; C&lt;W *, W *&gt;;
 	</pre>
 
 	<em>&mdash; end example</em>]
