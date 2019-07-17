@@ -150,38 +150,32 @@ This paper provides wording for the Alias Template and Inheriting Constructors C
 <p>Modify (dcl.type.simple/2) as follows</p>
 <blockquote>
 A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced (9.1.7.5). A <em>type-speciﬁer</em> of the form
-    <tt>typename</tt><sub><em>opt</em></sub> <em>nested-name-specifier<sub>opt</sub> template-name</em> is a placeholder for a deduced class type (9.1.7.6).
-    The <em>template-name</em> shall name a class template <ins>or an alias template whose <em>defining-type-id</em> is of the form 
-    <tt>typename</tt><sub><em>opt</em></sub><em>nested-name-specifier::simple-type-id</em> 
-    and the <em>nested-name-specifier</em> (if any) is non-dependent and whose template-name.</ins>
+    <tt>typename</tt><sub><em>opt</em></sub> <em>nested-name-specifier<sub>opt</sub> template-name</em> is a placeholder for a deduced class type (9.1.7.6). The <em>nested-name-specifier</em>, if any, shall be non-dependent and the <em>template-name</em> shall name either a class template or an alias template whose <em>defining-type-id</em> is of the form 
+    <tt>typename</tt><sub><em>opt</em></sub><em>nested-name-specifier</em><sub><em>opt</em></sub> <tt>template</tt><sub><em>opt</em></sub> <em>simple-template-id</em> 
+    and the <em>nested-name-specifier</em> (if any) is non-dependent and the
+    <em>template-name</em> of the <em>simple-template-id</em> names a class template
+    of an alias template that in turn meets these requirements.
 </blockquote>
-    Modify the first paragraph of (dcl.type.class.deduct) as follows
-    <blockquote>If a placeholder for a deduced class type appears as a <em>decl-speciﬁer</em> in the <em>decl-speciﬁer-seq</em> of an initializing
-declaration (9.3) of a variable, the placeholder is replaced by the return type of the function selected by
-overload resolution for class template deduction (11.3.1.8)</blockquote>
-    <p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
-<blockquote>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
+<p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
+<blockquote><ul><ul><li>The return type is the <em>simple-template-id</em> of the
+<em>deduction-guide</em>.</li></ul></ul>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
         class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
-          the set contains the functions
-      and function templates formed from an
-        alias template from the procedure in (over.match.class.deduct) whose template parameters are those of <tt>C</tt>
-    and whose <em>simple-template-id</em> is <tt>B</tt>.</ins></p></blockquote>
-
-Add the following after the first paragraph of over.match.class.deduct 
-<blockquote><ul><ul><li>The return type is the <em>simple-template-id</em> of the
-<em>deduction-guide</em>.</li></ul></ul><ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2) where the
+          and if the name of an alias template whose <em>template-name</em> 
+    is a placeholder for a template parameters are those of <tt>C</tt>
+    and whose <em>simple-template-id</em> is <tt>B</tt> is
+    a placeholder for a deduced class type, then the set contains the functions
+      and function templates formed from that alias template by 
+    applying the procedure below.</ins></p>
+    <ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-    naming a specialization of an alias or class template
-    <tt>B</tt> with template argument list <em>L</em> denoting
-    a type that is a specialization of class template <tt>C</tt>, a
+     <tt>B&lt;L&gt;</tt>, a
 	set of function or function templates is formed as follows. For each function or function
-	template <tt>f</tt> (recursively) formed for <tt>B</tt> by the process in 
-    (over.match.class.deduct), 
-    add a function or function
-	template <tt>f'</tt> to the set. <tt>f'</tt> is formed 
-    according to the following procedure:
+	template <tt>f</tt> formed  by applying the process in 
+    this subclause to <tt>B</tt> (as opposed to <tt>A</tt>), 
+    form a function or function template <tt>f'</tt> according to the
+        following procedure and add it to the set:
 	<ul><li>Deduce the template arguments of the return type of <tt>f</tt>
     from <tt>B&lt;L&gt;</tt>
 	according to the process in (temp.deduct.type) with the exception that deduction does
@@ -210,9 +204,10 @@ Add the following after the first paragraph of over.match.class.deduct
     The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
 <blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
 
-    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argument list is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
+    with a single partial specialization whose template parameter list is that of <tt>A</tt> and whose template argumentIlist is a specialization of <tt>A</tt> with the template argument list of <tt>A</tt> (temp.dep.type), <tt>AA&lt;T&gt;</tt> matches the partial specialization.
     </ins><p>
-	Initialization and overload resolution are performed as described in 
+	<p></p>
+    Initialization and overload resolution are performed as described in 
     (dcl.init 9.3) and (over.match.ctor 12.3.1.3), 
     (over.match.copy 12.3.1.4), or (over.match.list 12.3.1.7) (as
     appropriate for the type of initialization performed) for an object of a hypothetical class type, ...</p></blockquote> 
