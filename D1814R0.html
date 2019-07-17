@@ -147,9 +147,21 @@ This paper provides wording for the Alias Template and Inheriting Constructors C
 <b>R0</b>, 2019-07-15: Split from P1021R4<br>
 
 <h2>Wording</h2>
-<p>In Table 12, change the following entry</p>
-<blockquote>|   <em>template-name</em>   |   the type as defined in 9.1.7.6 or over.match.alias.deduct  |</blockquote>
-<p>Modify (dcl.simple.type/2) as follows</p>
+<p>Modify (dcl.type.simple/2) as follows</p>
+<blockquote>
+A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced (9.1.7.5). A <em>type-speciﬁer</em> of the form
+    <tt>typename</tt><sub><em>opt</em></sub> <em>nested-name-specifier<sub>opt</sub> template-name</em> is a placeholder for a deduced class type (9.1.7.6).
+    The <em>template-name</em> shall name a class template <ins>or an alias template whose <em>defining-type-id</em> is of the form 
+    <tt>typename</tt><sub><em>opt</em></sub><em>nested-name-specifier::simple-type-id</em> 
+    and the <em>nested-name-specifier</em> (if any) is non-dependent and whose template-name.</ins>
+</blockquote>
+    Modify the first paragraph of (dcl.type.class.deduct) as follows
+    <blockquote>If a placeholder for a deduced class type appears as a <em>decl-speciﬁer</em> in the <em>decl-speciﬁer-seq</em> of an initializing
+declaration (9.3) of a variable, the placeholder is replaced by the return type of the function selected by
+overload resolution for class template deduction (11.3.1.8) <ins>if the
+        placeholder designates a class template, or by alias template
+        deduction (over.match.alias.deduct) if the placeholder designates
+        an alias template.</ins> </blockquote>
     <p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
 <blockquote>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
@@ -159,8 +171,8 @@ This paper provides wording for the Alias Template and Inheriting Constructors C
         alias template (over.match.alias.deduct) whose template parameters are those of <tt>C</tt>
     and whose <em>simple-template-id</em> is <tt>B</tt>.</ins></p></blockquote>
 
-Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
-<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2)
+Add a new subsubsection after over.match.class.deduct titled Alias template argument deduction (&ldquo;over.match.alias.deduct&rdquo;)
+<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
     naming a specialization of an alias or class template
@@ -168,7 +180,9 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
     a type that is a specialization of class template <tt>D</tt>, a
 	set of function or function templates is formed as follows. For each function or function
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
-    (over.match.class.deduct or over.match.alias.deduct), 
+    (over.match.class.deduct) if <tt>C</tt> is a class template
+    or (recursively) the process in (over.match.alias.deduct) if <tt>C</tt>
+    is an alias template, 
     add a function or function
 	template <tt>f'</tt> to the set. <tt>f'</tt> is formed 
     according to the following procedure:
@@ -195,7 +209,7 @@ Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.a
             <li>
 			If <tt>f</tt> was generated from a <em>deduction-guide</em> (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
                 is considered to be so as well.</li>
-        <li>The explicit specifier of <tt>f'</tt> is the <em>explicit-specifier</em> of <tt>g</tt> (if any).</li></ul>
+        <li>The <em>explicit-specifier</em> of <tt>f'</tt> is the <em>explicit-specifier</em> of <tt>g</tt> (if any).</li></ul>
 		
     The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
 <blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
@@ -220,19 +234,24 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	<br/>
 	[<em>Example:</em><pre>
 	template &lt;class T, class U&gt; struct C {
-	  C(T, U);
+	  C(T, U);   // #1
 	};
 	template&lt;class T, class U&gt;
-	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
+	C(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;; // #2
 	
 	template&lt;class V&gt;
 	using A = C&lt;V *, V *&gt;;
+        template&lt;class W&gt;
+        using B = A&lt;W&gt; requires Integral&lt;W&gt;;
 	
 	int i{};
 	double d{};
 	A a1(&amp;i, &amp;i); // Deduces <em>A&lt;int&gt;</em>
 	A a2(i, i); // <em>Error: cannot deduce V * from i</em>
-	A a3(&amp;i, &amp;d); // <em>Error: cannot deduce alias template from C&lt;int *, double *&gt; </em>
+	A a3(&amp;i, &amp;d); // <em>Error: #1: Cannot deduce (V*, V*) from (int *, double *) </em>
+                                #2: Cannot deduce C&lt;V&gt; from C&lt;int *, double *&gt;
+        B b1(&amp;i, &amp;i); // Deduces B&lt;int&gt;
+        B b2(&amp;d, &amp;d); // Error: cannot deduce B&lt;W&gt; from C&lt;double *, double *&gt;;
 	</pre>
     Possible exposition only implementation of the above procedure:
 	<pre>        //<em>The following concept ensures a specialization of A is deduced</em>
@@ -248,6 +267,17 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	template&lt;class V, class U&gt; 
 	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;
 	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+      
+        // <em>The following concept ensures a specialization a B is deduced</em>
+        template &lt;class&gt; class BB;
+        template &lt;class V&gt; class BB&lt;B&lt;V&gt;&gt; { };
+        template &lt;class T&gt; concept deduces_B = requires { sizeof(BB&lt;T&gt;); };
+        
+        // The function template for B derived from the above f' for A is
+ 	template&lt;class W, class U&gt; 
+	auto f_prime_for_B(W *, U) -&gt; C&lt;W *, std::type_identity_t&lt;U&gt;&gt;
+	  requires deduces_A&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+                &amp;&amp; deduces_B&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;;
 	</pre>
 
 	<em>&mdash; end example</em>]
