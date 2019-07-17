@@ -247,7 +247,7 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
 	int i{};
 	double d{};
 	A a1(&amp;i, &amp;i); // Deduces <em>A&lt;int&gt;</em>
-	A a2(i, i); // <em>Error: cannot deduce V * from i</em>
+	A a2(i, i);   // <em>Error: cannot deduce V * from i</em>
 	A a3(&amp;i, &amp;d); // <em>Error: #1: Cannot deduce (V*, V*) from (int *, double *) </em>
                                 #2: Cannot deduce C&lt;V&gt; from C&lt;int *, double *&gt;
         B b1(&amp;i, &amp;i); // Deduces B&lt;int&gt;
@@ -261,33 +261,48 @@ that had an <em>explicit-specifier</em>, each such notional constructor is consi
         
         // <em>f is formed (over.match.class.deduct 11.3.1.8) from the deduction-guide of C</em>
         template&lt;class T, class U&gt; auto f(T, U) -&gt; C&lt;T, std::type_identity_t&lt;U&gt;&gt;;
-	// <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
+
+        // <em>Deducing arguments for C&lt;T, std::type_identity_t&lt;U&gt;&gt; from C&lt;V *, V*&gt; deduces T as V *</em>
 	
 	// <em>f' is obtained by transforming f as described by the above procedure</em>
 	template&lt;class V, class U&gt; 
 	auto f_prime(V *, U) -&gt; C&lt;V *, std::type_identity_t&lt;U&gt;&gt;
 	  requires deduces_A&lt;C&lt;V *, std::type_identity_t&lt;U&gt;&gt;&gt;;
-      
+         
+        // <em>Likewise, f2 is formed from the C(T, U) constructor of C,</em>
+        // <em>generating the following function template</em>
+  	auto f2_prime(V *, V*) -&gt; C&lt;V *, V *&gt;
+	  requires deduces_A&lt;C&lt;V *, V *&gt;&gt;;
+   
         // <em>The following concept ensures a specialization a B is deduced</em>
         template &lt;class&gt; class BB;
         template &lt;class V&gt; class BB&lt;B&lt;V&gt;&gt; { };
         template &lt;class T&gt; concept deduces_B = requires { sizeof(BB&lt;T&gt;); };
         
-        // The function template for B derived from the above f' for A is
+        // <em>f2 is formed from the C(T, U) constructor of C</em>
+        
+        // The function templates for B derived from the above f' and f2' for A is
  	template&lt;class W, class U&gt; 
 	auto f_prime_for_B(W *, U) -&gt; C&lt;W *, std::type_identity_t&lt;U&gt;&gt;
-	  requires deduces_A&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+	  requires deduces_A&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;
                 &amp;&amp; deduces_B&lt;C&lt;W *, std::type_identity_t&lt;U&gt;&gt;&gt;;
+	auto f2_prime_for_B(T, U) -&gt; C&lt;T, U&gt;
+	  requires deduces_A&lt;C&lt;T, U&gt;&gt;&gt;
+                &amp;&amp; deduces_B&lt;C&lt;T, U&gt;&gt;&gt;;
 	</pre>
 
 	<em>&mdash; end example</em>]
 		</ins></blockquote>
-Insert a bullet after over.match.best/1.9 as follows
-	<blockquote><ins>
-	<ul><li><tt>F1</tt> is generated from class template argument deduction (over.match.class.deduct 11.3.1.8) for
+Insert a bullet after over.match.best/2.9 as follows
+	<blockquote><blockquote><tt>bool b = 1 &lt; S();</tt>
+// <em>calls #2</em>
+— end example
+] or, if not that</blockquote>
+	<ul><ins><li><tt>F1</tt> is generated from class template argument deduction (over.match.class.deduct 11.3.1.8) for
 		a class <tt>D</tt>, <tt>F2</tt> is generated from inheriting constructors from
 		a base class of <tt>D</tt>, and for all arguments the corresponding
-		parameters of <tt>F1</tt> and <tt>F2</tt> have the same type, or if not that,</li></ul></ins></blockquote>
+        parameters of <tt>F1</tt> and <tt>F2</tt> have the same type, or if not that,</li></ins>
+        <li><tt>F1</tt> is generated from a <em>deduction-guide</em> (12.3.1.8) and <tt>F2</tt> is not, or, if not that</li></ul></blockquote>
 
     <script type="text/javascript">
 	SyntaxHighlighter.defaults['gutter'] = false;
