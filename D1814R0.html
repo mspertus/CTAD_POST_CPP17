@@ -147,44 +147,55 @@ This paper provides wording for the Alias Template and Inheriting Constructors C
 <b>R0</b>, 2019-07-15: Split from P1021R4<br>
 
 <h2>Wording</h2>
+<p>In Table 12, change the following entry</p>
+<blockquote>|   <em>template-name</em>   |   the type as defined in 9.1.7.6 or over.match.alias.deduct  |</blockquote>
+<p>Modify (dcl.simple.type/2) as follows</p>
+    <p>In over.match.class.deduct, append to paragraph 1 as follows:</p>
+<blockquote>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
+        from a base
+        class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
+          the set contains the functions
+      and function templates formed from an
+        alias template (over.match.alias.deduct) whose template parameters are those of <tt>C</tt>
+    and whose <em>simple-template-id</em> is <tt>B</tt>.</ins></p></blockquote>
 
 Add a new subsubsection after over.match.class.deduct titled &ldquo;over.match.alias.deduct&rdquo;
-<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.spec.auto 9.1.7.5) where the
+<blockquote><ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2)
 	<em>template-name</em> names an alias template <tt>A</tt> 
 	whose <em>defining-type-id</em> is a <em>simple-template-id</em>
-    naming a specialization of a template
+    naming a specialization of an alias or class template
     <tt>C</tt> with template argument list <em>L</em> denoting
     a type that is a specialization of class template <tt>D</tt>, a
-	set of functions and function templates is formed as follows. For each function or function
+	set of function or function templates is formed as follows. For each function or function
 	template <tt>f</tt> formed for <tt>C</tt> by the process in 
     (over.match.class.deduct or over.match.alias.deduct), 
-    form a function or function
-	template <tt>f'</tt> according to the following procedure:
+    add a function or function
+	template <tt>f'</tt> to the set. <tt>f'</tt> is formed 
+    according to the following procedure:
 	<ul><li>Deduce the template arguments of the return type of <tt>f</tt>
     from <tt>C&lt;L&gt;</tt>
 	according to the process in (temp.deduct.type) with the exception that deduction does
 	not fail if not all template arguments are deduced. Let <tt>g</tt>
-    denote the result of substituting these deductions into <tt>f</tt>.</li>
-		<li>Form the function template <tt>f'</tt> as follows:
-		<ul>
-            <li>The <em>declarator</em> of <tt>f'</tt> is 
-            the <em>declarator</em> of <tt>g</tt>.</li>
-		<li>The template parameter list of <tt>f'</tt>
+    denote the result of substituting these deductions into <tt>f</tt>.
+        If the substitution fails, no <tt>f'</tt> is produced.</li>
+		<li>Form the function or function template <tt>f'</tt> as follows:
+		<ul><li>The function type of <tt>f'</tt> is the function type of <tt>g</tt>.
+		<li>If <tt>f</tt> is a function template, 
+            the template parameter list of <tt>f'</tt>
             consists of all the template parameters of <tt>A</tt>
-            that appear in the above deductions or in their
-            default initializers, followed by
-            the template parameters of <tt>g</tt> that were
-            not deduced.</li>
+            (including their default template arguments)
+            that appear in the above deductions or (recursively) in their
+            default template arguments, followed by
+            the template parameters of <tt>f</tt> that were
+            not deduced (including their default template arguments).</li>
         
-		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of the associated constraints of <tt>g</tt> and a constraint that is satisfied if and only if the arguments of <tt>A</tt> are deducible (see below) from the return type.</li>
+		<li>The associated constraints (temp.constr.decl 12.4.2) are the conjunction of the associated constraints of <tt>g</tt> and a constraint that is satisfied if and only if the arguments of <tt>A</tt> are deducible (see below) from the return type.</li></ul>
         <li>If <tt>f</tt> is a copy deduction candidate (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
                 is considered to be so as well.</li>
             <li>
 			If <tt>f</tt> was generated from a <em>deduction-guide</em> (over.match.class.deduct 11.3.1.8), then <tt>f'</tt>
                 is considered to be so as well.</li>
-                <li>If <tt>f</tt> was generated from a constructor or <em>deduction-guide</em>
-				with an <em>explicit-specifier</em>, then
-                    <tt>f'</tt> is considered to have the same as well.</li></ul></li></ul>
+        <li>The explicit specifier of <tt>f'</tt> is the <em>explicit-specifier</em> of <tt>g</tt> (if any).</li></ul>
 		
     The arguments of a template <tt>A</tt> are said to be deducible from a type <tt>T</tt> if, given a class template
 <blockquote><pre>template &lt;typename&gt; class AA;</pre></blockquote>
