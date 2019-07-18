@@ -140,7 +140,7 @@ Audience: Core Working Group
 <h1>Wording for Class Template Argument Deduction for Alias Templates and Inherited Constructors
 </h1>
 This paper provides wording for the Alias Template and Inheriting Constructors Class Template Argument Deduction support from 
-<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1021r4.html">P1021R4</a>.
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1021r4.html">D1814R0</a>.
 
 <h2>Document revision history</h2>
 
@@ -150,11 +150,17 @@ This paper provides wording for the Alias Template and Inheriting Constructors C
 <p>Modify (dcl.type.simple/2) as follows</p>
 <blockquote>
 A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced (9.1.7.5). A <em>type-speciﬁer</em> of the form
-    <tt>typename</tt><sub><em>opt</em></sub> <em>nested-name-specifier<sub>opt</sub> template-name</em> is a placeholder for a deduced class type (9.1.7.6). The <em>nested-name-specifier</em>, if any, shall be non-dependent and the <em>template-name</em> shall name either a class template or an alias template whose <em>defining-type-id</em> is of the form 
+    <tt>typename</tt><sub><em>opt</em></sub> <em>nested-name-specifier<sub>opt</sub> template-name</em> is a placeholder for a deduced class type (9.1.7.6). 
+    <del>The
+template-name
+shall name a class template.</del><ins>The <em>nested-name-specifier</em>, if any, shall be non-dependent and the <em>template-name</em> shall name either a class template or an alias template whose <em>defining-type-id</em> is of the form 
     <tt>typename</tt><sub><em>opt</em></sub><em>nested-name-specifier</em><sub><em>opt</em></sub> <tt>template</tt><sub><em>opt</em></sub> <em>simple-template-id</em> 
     and the <em>nested-name-specifier</em> (if any) is non-dependent and the
     <em>template-name</em> of the <em>simple-template-id</em> names a class template
-    of an alias template that in turn meets these requirements.
+    of an alias template that in turn meets these requirements.</ins>
+     [Note: An <em>injected-class-name</em> is never interpreted as a <em>template-name</em>
+in contexts where class template argument deduction would be performed (13.7.1).
+— end note]
 </blockquote>
 <p>In over.match.class.deduct, modify the beginning of paragraph 1 as follows:</p>
 <blockquote>When resolving a placeholder for a deduced class type (9.1.7.6) where the
@@ -164,13 +170,12 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
 <blockquote><ul><ul><li>The return type is the <em>simple-template-id</em> of the
 <em>deduction-guide</em>.</li></ul></ul>    <p><ins>In addition, if <tt>C</tt> inherits constructors (namespace.udecl 9.8) 
         from a base
-        class denoted by a <em>simple-template-id</em> <tt>B</tt>, 
+        class denoted by a <em>simple-template-id</em> <tt>D</tt>, 
           and if the name of an alias template whose <em>template-name</em> 
     is a placeholder for a template parameters are those of <tt>C</tt>
-    and whose <em>simple-template-id</em> is <tt>B</tt> is
-    a placeholder for a deduced class type, then the set contains the functions
-      and function templates formed from that alias template by 
-    applying the procedure below.</ins></p>
+    and whose <em>simple-template-id</em> is <tt>D</tt> is
+    a placeholder for a deduced class type, then the set also 
+    contains the guides of that alias template.</ins></p>
     
     <ins>When resolving a placeholder for a deduced class type (dcl.type.simple 9.1.7.2) where the
 	<em>template-name</em> names an alias template <tt>A</tt> 
@@ -213,14 +218,14 @@ A <em>placeholder-type-speciﬁer</em> is a placeholder for a type to be deduced
 	<p>Initialization and overload resolution are performed as described in 
     (dcl.init 9.3) and (over.match.ctor 12.3.1.3), 
     (over.match.copy 12.3.1.4), or (over.match.list 12.3.1.7) (as
-appropriate for the type of initialization performed) for an object of a hypothetical class type, where the
-guides of the templates named by the placeholder are considered to be the 
+appropriate for the type of initialization performed) for an object of a hypothetical class type, where the <del>selected functions and function templates</del>
+<em>guides of the template named by the placeholder</em> are considered to be the 
     constructors of that class type for the
 purpose of forming an overload set, and the initializer is provided by the context in which class template
 argument deduction was performed. As an exception, the first phase in 12.3.1.7 (considering initializer-list
 constructors) is omitted if the initializer list consists of a single expression of type <em>cv</em> <tt>U</tt>,
 	where <tt>U</tt> is a specialization of <del><tt>C</tt></del>
-        <ins>the class template for which the placeholder names a specialization</ins> or a class derived from <del>a specialization of <tt>C</tt></del><ins>therefrom</ins>.
+        <ins>the class template for which the placeholder names a specialization</ins> or a class derived <del>from a specialization of <tt>C</tt></del><ins>therefrom</ins>.
 	If the function or 
 	function template was generated from a constructor or <em>deduction-guide</em>
 that had an <em>explicit-specifier</em>, each such notional constructor is considered to
